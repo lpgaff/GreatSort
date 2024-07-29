@@ -1,0 +1,16 @@
+*~
+*/*~
+*Dict.cc
+*.o
+*.pcm
+bin/*
+lib/*
+src/.*o
+*.xcworkspace
+.DS_Store
+*/.DS_Store
+doc/*
+*.html
+data/*.pdf
+.vscode/*
+tests/*

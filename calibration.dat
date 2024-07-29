@@ -1,0 +1,25 @@
+# Calibration file example for GreatSort
+#
+# Liam Gaffney - July 2024
+# liam.gaffney@liverpool.ac.uk
+#
+# pass this file to great_sort with the -c flag
+#
+#
+# Format - CAEN calibration
+# caen_<mod>_<ch>.Offset:		// energy calibration offset (default = 0.0)
+# caen_<mod>_<ch>.Gain:			// energy calibration gain (default = 1.0)
+# caen_<mod>_<ch>.GainQuadr:	// energy calibration quadratic term (default = 0.0)
+# caen_<mod>_<ch>.Time:			// time offset in ns (default = 0). Note that signals are all aligned to dE, so keep that offset as 0 unless you want a hard time
+# caen_<mod>_<ch>.Threshold:	// software threshold in adc units (default = 0)
+# caen_<mod>_<ch>.Type:			// data type to use for the energy evaluation: Qlong, Qshort or Qdiff (default = Qlong). Qdiff = Qlong - Qshort
+
+caen_0_0.Offset: 0.0
+caen_0_0.Gain: 1.0
+caen_0_0.Type: Qlong
+caen_0_1.Offset: 0.0
+caen_0_1.Gain: 1.0
+caen_0_1.Type: Qlong
+caen_0_2.Offset: 0.0
+caen_0_2.Gain: 1.0
+caen_0_2.Type: Qdiff

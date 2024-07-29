@@ -1,0 +1,61 @@
+##########################################################
+# This file contains all the settings for the DAQ        #
+# including the geometry mapping for each detector       #
+# Parameters that are commented are the defaults values  #
+# If you want to change them, uncomment or make a copy   #
+#                                                        #
+# You pass this file to great_sort with the -s if needed #
+##########################################################
+
+#-------------#
+# CAEN things #
+#-------------#
+#NumberOfCAENModules: 2
+#NumberOfCAENChannels: 16
+#CAEN_0.Model: 1725	# can be 1724, 1725 or 1730
+#CAEN_1.Model: 1725	# I suppose we can also support others in future
+#CAEN_0.Firmware: PSD	# PSD or PHA (not yet supported)
+#CAEN_1.Firmware: PSD	#
+
+
+#------------------------#
+# Triggers, pulsers, etc #
+#------------------------#
+#SyncCode: 4
+#TimestampCode: 5
+
+
+#-------------#
+# Data things #
+#-------------#
+#DataBlockSize: 0x10000 # 64 kB (0x10000) for CAEN only data?
+#CAENDataOnly: false	# this flag isn't needed yet
+
+
+#---------------#
+# Event builder #
+#---------------#
+#EventWindow: 3e3 		# in ns. Default is 3 µs
+#GammaRayHitWindow: 500	# in ns. Default is 500 ns
+
+
+
+#---------------------#
+# Gamma-ray Detectors #
+#---------------------#
+#NumberOfGammaRayDetectors: 2	# This is default 2
+#GammaRay_0.Module: 0			# List of detectors
+#GammaRay_0.Channel: 0			# and their mapping
+#GammaRay_1.Module: 0
+#GammaRay_1.Channel: 1
+
+
+#-------------#
+# TAC Modules #
+#-------------#
+#NumberOfTACs: 1	# Number of TACs
+#TAC_0.Module: 0	# location of the TAC in the DAQ
+#TAC_0.Channel: 3	# location of the TAC in the DAQ
+
+
+
