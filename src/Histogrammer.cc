@@ -20,9 +20,10 @@ void GreatHistogrammer::MakeHists() {
     std::string dirname;
 	
 	// Timing histograms
+	dirname = "Timing";
 	if( !output_file->GetDirectory( dirname.data() ) )
 		output_file->mkdir( dirname.data() );
-	output_file->cd( "Timing" );
+	output_file->cd( dirname.data() );
 
 	// Gamma-gamma time
 	hname = "gamma_gamma_td";

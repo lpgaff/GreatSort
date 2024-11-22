@@ -435,8 +435,8 @@ void GreatConverter::ProcessBlockData( unsigned long nblock ){
 		if( my_type == 0x3 ){
 			
 			// Check if it's new data
-			if( ProcessCAENData() )
-				FinishCAENData();
+			ProcessCAENData();
+			FinishCAENData();
 
 		}
 		
@@ -487,7 +487,7 @@ bool GreatConverter::GetCAENChanID(){
 	
 }
 
-bool GreatConverter::ProcessCAENData(){
+void GreatConverter::ProcessCAENData(){
 
 	// CAEN data format
 	my_adc_data = word_0 & 0xFFFF; // 16 bits from 0
@@ -500,7 +500,7 @@ bool GreatConverter::ProcessCAENData(){
 		std::cout << "Bad CAEN event with mod_id=" << (int) my_mod_id;
 		std::cout << " ch_id=" << (int) my_ch_id;
 		std::cout << " data_id=" << (int) my_data_id << std::endl;
-		return false;
+		return;
 
 	}
 	
@@ -514,7 +514,7 @@ bool GreatConverter::ProcessCAENData(){
 	else my_tm_stp = my_tm_stp*4;
 	
 	// First of the data items
-	if( !flag_caen_data0 && !flag_caen_data1 && !flag_caen_data2 && !flag_caen_data3 ){
+	if( !flag_caen_data0 && !flag_caen_data1 && !flag_caen_data2 && !flag_caen_data3 && !flag_caen_trace ){
 		
 		// Make a CaenData item, need to add Qlong, Qshort and traces
 		caen_data->SetTimeStamp( my_tm_stp );
@@ -529,23 +529,25 @@ bool GreatConverter::ProcessCAENData(){
 	// event with an empty trace.
 	else if( flag_caen_data0 && flag_caen_data1 && ( flag_caen_data2 || flag_caen_data3 ) ){
 		
-		// Fake trace flag, but with an empty trace
-		flag_caen_trace = true;
-		
 		// Finish up the previous event
+		flag_caen_trace = true;
 		FinishCAENData();
 
-		// Then set the info correctly for this event
+		// Then set the info correctly for the next event
 		caen_data->SetTimeStamp( my_tm_stp );
 		caen_data->SetModule( my_mod_id );
 		caen_data->SetChannel( my_ch_id );
-		
-		return false;
 		
 	}
 
 	// Qlong
 	if( my_data_id == 0 ) {
+		
+		// Check we don't already have this data type
+		if( flag_caen_data0 ) {
+			std::cout << "Got data0 twice for the same event" << std::endl;
+			return;
+		}
 		
 		// Fill histograms
 		hcaen_qlong[my_mod_id][my_ch_id]->Fill( my_adc_data );
@@ -557,6 +559,12 @@ bool GreatConverter::ProcessCAENData(){
 	
 	// Qshort
 	if( my_data_id == 1 ) {
+		
+		// Check we don't already have this data type
+		if( flag_caen_data1 ) {
+			std::cout << "Got data1 twice for the same event" << std::endl;
+			return;
+		}
 		
 		my_adc_data = my_adc_data & 0x7FFF; // 15 bits from 0
 		hcaen_qshort[my_mod_id][my_ch_id]->Fill( my_adc_data );
@@ -574,6 +582,12 @@ bool GreatConverter::ProcessCAENData(){
 	// Baseline
 	if( my_data_id == 2 ) {
 		
+		// Check we don't already have this data type
+		if( flag_caen_data2 ) {
+			std::cout << "Got data2 twice for the same event" << std::endl;
+			return;
+		}
+
 		my_adc_data = my_adc_data & 0xFFFF; // 16 bits from 0
 		flag_caen_data2 = true;
 
@@ -585,6 +599,12 @@ bool GreatConverter::ProcessCAENData(){
 	// Fine timing
 	if( my_data_id == 3 ) {
 		
+		// Check we don't already have this data type
+		if( flag_caen_data3 ) {
+			std::cout << "Got data3 twice for the same event" << std::endl;
+			return;
+		}
+
 		my_adc_data = my_adc_data & 0x03FF; // 10 bits from 0
 		flag_caen_data3 = true;
 
@@ -597,7 +617,7 @@ bool GreatConverter::ProcessCAENData(){
 
 	}
 	
-	return true;
+	return;
 
 }
 
@@ -613,10 +633,19 @@ int GreatConverter::ProcessTraceData( int pos ){
 	my_tm_stp_lsb = word_1 & 0x0FFFFFFF;  // 28 bits from 0
 	my_tm_stp = ( my_tm_stp_msb << 28 ) | my_tm_stp_lsb;
 	
+	// CAEN timestamps are 4 ns precision for V1725 and 2 ns for V1730
+	if( set->GetCAENModel( my_mod_id ) == 1730 ) my_tm_stp = my_tm_stp*2;
+	else if( set->GetCAENModel( my_mod_id ) == 1725 ) my_tm_stp = my_tm_stp*4;
+	else my_tm_stp = my_tm_stp*4;
+	
 	// Make a CAEN data item
-	caen_data->SetTimeStamp( my_tm_stp );
-	caen_data->SetModule( my_mod_id );
-	caen_data->SetChannel( my_ch_id );
+	if( !flag_caen_data0 && !flag_caen_data1 && !flag_caen_data2 && !flag_caen_data3 ) {
+		
+		caen_data->SetTimeStamp( my_tm_stp );
+		caen_data->SetModule( my_mod_id );
+		caen_data->SetChannel( my_ch_id );
+	
+	}
 	
 	// Get the samples from the trace
 	for( UInt_t j = 0; j < nsamples/4; j++ ){
@@ -660,8 +689,12 @@ int GreatConverter::ProcessTraceData( int pos ){
 
 void GreatConverter::FinishCAENData(){
 	
+	// Check items
+	bool caen_data_check = flag_caen_data0 && flag_caen_data1 && ( flag_caen_data2 || flag_caen_data3 ) && flag_caen_trace;
+	bool event_ts_check = (long long)my_tm_stp != (long long)caen_data->GetTimeStamp();
+	
 	// Got all items
-	if( ( flag_caen_data0 && flag_caen_data1 && ( flag_caen_data2 || flag_caen_data3 ) ) && flag_caen_trace ){
+	if( caen_data_check ){
 
 		// Fill histograms
 		hcaen_hit[caen_data->GetModule()]->Fill( ctr_caen_hit[caen_data->GetModule()], caen_data->GetTime(), 1 );
@@ -692,7 +725,7 @@ void GreatConverter::FinishCAENData(){
 
 		// Set this data and fill event to tree
 		// Also add the time offset when we do this
-		caen_data->SetTimeStamp( caen_data->GetTime() + cal->CaenTime( caen_data->GetModule(), caen_data->GetChannel() ) );
+		caen_data->SetTimeStamp( caen_data->GetTimeStamp() + cal->CaenTime( caen_data->GetModule(), caen_data->GetChannel() ) );
 		data_packet->SetData( caen_data );
 		if( !flag_source ) output_tree->Fill();
 		data_packet->ClearData();
@@ -700,7 +733,7 @@ void GreatConverter::FinishCAENData(){
 	}
 	
 	// missing something
-	else if( (long long)my_tm_stp != (long long)caen_data->GetTimeStamp() ) {
+	else if( event_ts_check ) {
 		
 		std::cout << "Missing something in CAEN data and new event occured" << std::endl;
 		std::cout << " Qlong       = " << flag_caen_data0 << std::endl;
@@ -708,7 +741,9 @@ void GreatConverter::FinishCAENData(){
 		std::cout << " baseline    = " << flag_caen_data2 << std::endl;
 		std::cout << " fine timing = " << flag_caen_data3 << std::endl;
 		std::cout << " trace data  = " << flag_caen_trace << std::endl;
-
+		std::cout << "TS: 0x" << std::hex << my_tm_stp << " =/= 0x";
+		std::cout << caen_data->GetTimeStamp() << std::dec << std::endl;
+		
 	}
 
 	// This is normal, just not finished yet
