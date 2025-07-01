@@ -13,6 +13,7 @@
 #pragma link C++ class GreatEvts+;
 #pragma link C++ class GreatTACEvt+;
 #pragma link C++ class GreatGammaRayEvt+;
+#pragma link C++ class GreatDetectorEvt+;
 #pragma link C++ class GreatDataPackets+;
 #pragma link C++ class GreatCaenData+;
 #pragma link C++ class GreatInfoData+;

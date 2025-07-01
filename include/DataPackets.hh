@@ -135,7 +135,6 @@ public:
 		return( GetTime() < rhs.GetTime() );
 	};
 
-
 	void ClearData();
 
 protected:

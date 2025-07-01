@@ -463,8 +463,12 @@ void GreatEventBuilder::TACFinder() {
 		htac_id[tacid_list[i]]->Fill( tactd_list[i] );
 		
 		// Set the TAC event
-		tac_evt->SetEvent( tactd_list[i], tacts_list[i], tacid_list[i] );
-			
+		tac_evt->SetTACTime( tactd_list[i] );
+		tac_evt->SetID( tacid_list[i] );
+		gamma_evt->SetSegment( 0 );
+		gamma_evt->SetType( 2 );
+		tac_evt->SetTime( tacts_list[i] );
+
 		// Write event to tree
 		write_evts->AddEvt( tac_evt );
 		tac_ctr++;
@@ -490,7 +494,12 @@ void GreatEventBuilder::GammaRayFinder() {
 		// Histogram the data
 		gamma_E->Fill( gen_list[i] );
 		gamma_E_vs_det->Fill( gid_list[i], gen_list[i] );
-		
+
+		// TODO: Here one could do reconstruction of core-segment hits
+		// it is not done yet, but there are examples in MiniballSort
+		// or contact me (liam.gaffney@liverpool.ac.uk) if you have a
+		// use case for segmented detectors and would like it implementing
+
 		// Coincidences
 		for( unsigned int j = i+1; j < gen_list.size(); ++j ) {
 			
@@ -508,10 +517,13 @@ void GreatEventBuilder::GammaRayFinder() {
 			} // prompt
 				
 		} // j
-		
+
 		// Set the GammaRay event
-		gamma_evt->SetEvent( gen_list[i], gid_list[i],
-							 0, gts_list[i] );
+		gamma_evt->SetEnergy( gen_list[i] );
+		gamma_evt->SetID( gid_list[i] );
+		gamma_evt->SetSegment( 0 );
+		gamma_evt->SetType( 0 );
+		gamma_evt->SetTime( gts_list[i] );
 
 		// Write event to tree
 		write_evts->AddEvt( gamma_evt );
