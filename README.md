@@ -90,7 +90,7 @@ There is a plan to have these setting written in to the ROOT file itself, so the
 Events are built according to physical detectors or TAC units in to separate classes.
 This format is all contained within the GreatEvts class, which you can browse to see which functions are available.
 If you open the output file and want to draw directly from the `evt_tree`, you can load the library with `gSystem->Load("/path/to/GreatSort/lib/libgreat_sort.so")` or by adding it to your .rootlogon.C.
-Then you have access to all the member functions like `gamma_event->GetEnergy()`, `tac_event->GetTdiff()` etc.
+Then you have access to all the member functions like `hpge_event->GetEnergy()`, `tac_event->GetTdiff()` etc.
 
 ### Step 4: Histogramming
 Finally a bunch of standard physics histograms are built using input from the reaction file, given with the `-r` flag.
