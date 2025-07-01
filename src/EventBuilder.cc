@@ -138,15 +138,6 @@ void GreatEventBuilder::Initialise(){
 	
 	hit_ctr = 0;
 	
-	// Clear all vectors with the standard method
-	tactd_list.clear();
-	tacts_list.clear();
-	tacid_list.clear();
-	
-	gen_list.clear();
-	gts_list.clear();
-	gid_list.clear();
-	
 	// Now swap all these vectors with empty vectors to ensure they are fully cleared
 	std::vector<float>().swap(tactd_list);
 	std::vector<double>().swap(tacts_list);
