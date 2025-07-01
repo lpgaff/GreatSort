@@ -58,9 +58,6 @@ void GreatConverter::MakeTree() {
 	sorted_tree->Branch( "data", "GreatDataPackets", write_packet.get(), bufsize, splitLevel );
 	sorted_tree->SetDirectory( output_file->GetDirectory("/") );
 
-	output_tree->SetAutoFlush(-10e6);
-	sorted_tree->SetAutoFlush(-10e6);
-
 	caen_data = std::make_shared<GreatCaenData>();
 	info_data = std::make_shared<GreatInfoData>();
 

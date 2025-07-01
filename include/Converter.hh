@@ -81,7 +81,7 @@ public:
 	};
 	inline void PurgeOutput(){ output_file->Purge(2); }
 	inline TFile* GetFile(){ return output_file; };
-	inline TTree* GetTree(){ return output_tree; };
+	inline TTree* GetTree(){ return sorted_tree; };
 	inline TTree* GetSortedTree(){ return sorted_tree; };
 
 	inline void AddCalibration( std::shared_ptr<GreatCalibration> mycal ){ cal = mycal; };
@@ -224,7 +224,6 @@ private:
 
 	// Output stuff
 	TFile *output_file;
-	TTree *output_tree;
 	TTree *sorted_tree;
 
 	// Counters
