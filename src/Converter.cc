@@ -521,7 +521,10 @@ void GreatConverter::ProcessCAENData(){
 		}
 
 		// but for the PHA, we just get one energy item
-		else flag_finished = true;
+		else {
+			flag_caen_data1 = true;
+			flag_finished = true;
+		}
 
 	}
 
