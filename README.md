@@ -4,14 +4,14 @@ A code for sorting raw data in MIDAS GREAT format and producing ROOT trees.
 
 ## Instructions and user guide
 
-For the full details of how to use ISSSort, please take a look at the Wiki here on GitHub: https://github.com/ISOLDESolenoidalSpectrometer/ISSSort/wiki
+For the full details of how to use GreatSort, please take a look at the Wiki here on GitHub: https://github.com/lpgaff/GreatSort/wiki (doesn't exist yet)
 
 Some basic intructions are included in the below README.
 
 ## Download
 
 ```bash
-git clone https://github.com/lpgaff/GreatSSort
+git clone https://github.com/lpgaff/GreatSort
 ```
 
 ## Compile
