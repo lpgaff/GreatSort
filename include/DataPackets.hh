@@ -25,6 +25,7 @@ public:
 	};
 	inline unsigned char	GetModule() { return mod; };
 	inline unsigned char	GetChannel() { return ch; };
+	inline unsigned short	GetCharge() { return Qlong; };
 	inline unsigned short	GetQlong() { return Qlong; };
 	inline unsigned short	GetQshort() { return Qshort; };
 	inline unsigned short	GetQdiff() { return (int)Qlong-(int)Qshort; };
