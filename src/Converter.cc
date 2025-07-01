@@ -507,10 +507,30 @@ void GreatConverter::ProcessCAENData(){
 	if( set->GetCAENModel( my_mod_id ) == 1730 ) my_tm_stp = my_tm_stp*2;
 	else if( set->GetCAENModel( my_mod_id ) == 1725 ) my_tm_stp = my_tm_stp*4;
 	else my_tm_stp = my_tm_stp*4;
-	
+
+	// Make a test of whether we have new data
+	bool flag_new_data = false;
+	if( !flag_caen_data0 && !flag_caen_data1 &&
+	    !flag_caen_data2 && !flag_caen_data3 &&
+	   !flag_caen_trace ) flag_new_data = true;
+
+	// Make a test of whether we have finished a data packet
+	bool flag_finished = false;
+	if( flag_caen_data0 && ( flag_caen_data2 || flag_caen_data3 ) ) {
+
+		// If we have the PSD firmware, we need the short energy too
+		if( set->GetCAENFirmware( caen_data->GetModule() ) == "PSD" ){
+			if( flag_caen_data1 ) flag_finished = true;
+		}
+
+		// but for the PHA, we just get one energy item
+		else flag_finished = true;
+
+	}
+
 	// First of the data items
-	if( !flag_caen_data0 && !flag_caen_data1 && !flag_caen_data2 && !flag_caen_data3 && !flag_caen_trace ){
-		
+	if( flag_new_data ){
+
 		// Make a CaenData item, need to add Qlong, Qshort and traces
 		caen_data->SetTimeStamp( my_tm_stp );
 		caen_data->SetModule( my_mod_id );
@@ -522,7 +542,7 @@ void GreatConverter::ProcessCAENData(){
 	// already occured before we found traces. This means that there
 	// is not trace data. So set the flag to be true and finish the
 	// event with an empty trace.
-	else if( flag_caen_data0 && flag_caen_data1 && ( flag_caen_data2 || flag_caen_data3 ) ){
+	else if( flag_finished ){
 		
 		// Finish up the previous event
 		flag_caen_trace = true;
