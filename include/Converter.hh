@@ -52,7 +52,10 @@ public:
 	void ResetHists();
 	void MakeTree();
 	void StartFile();
-	unsigned long long SortTree();
+	void SortDataMap();
+	unsigned long long int SortTree( bool do_sort = true );
+	static bool MapComparator( const std::pair<unsigned long,double> &lhs,
+							  const std::pair<unsigned long,double> &rhs );
 
 	bool ProcessCurrentBlock( int nblock );
 
@@ -72,12 +75,9 @@ public:
 	
 	inline void CloseOutput(){
 		std::cout << "\n Writing data and closing the file" << std::endl;
-		//output_tree->SetDirectory(0);
 		output_file->Write( 0, TObject::kWriteDelete );
 		PurgeOutput();
 		output_file->Close();
-		//output_tree->ResetBranchAddresses();
-		//sorted_tree->ResetBranchAddresses();
 	};
 	inline void PurgeOutput(){ output_file->Purge(2); }
 	inline TFile* GetFile(){ return output_file; };
@@ -214,10 +214,14 @@ private:
 	unsigned int nsamples;
 
 	// Data types
-	std::unique_ptr<GreatDataPackets> data_packet;
+	std::shared_ptr<GreatDataPackets> write_packet = nullptr;
 	std::shared_ptr<GreatCaenData> caen_data;
 	std::shared_ptr<GreatInfoData> info_data;
 	
+	// Vector for storing the data packets before time ordering
+	std::vector<std::shared_ptr<GreatDataPackets>> data_vector;
+	std::vector<std::pair<unsigned long,double>> data_map;
+
 	// Output stuff
 	TFile *output_file;
 	TTree *output_tree;

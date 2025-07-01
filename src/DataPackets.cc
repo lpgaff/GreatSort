@@ -54,7 +54,6 @@ void GreatDataPackets::SetData( std::shared_ptr<GreatInfoData> data ){
 	
 }
 
-
 void GreatDataPackets::ClearData(){
 	
 	caen_packets.clear();
@@ -67,8 +66,8 @@ void GreatDataPackets::ClearData(){
 	
 }
 
-double GreatDataPackets::GetTime(){
-		
+double GreatDataPackets::GetTime() const {
+
 	if( IsCaen() ) return GetCaenData()->GetTime();
 	if( IsInfo() ) return GetInfoData()->GetTime();
 
@@ -76,8 +75,8 @@ double GreatDataPackets::GetTime(){
 	
 }
 
-unsigned long long GreatDataPackets::GetTimeStamp(){
-		
+unsigned long long GreatDataPackets::GetTimeStamp() const {
+
 	if( IsCaen() ) return GetCaenData()->GetTimeStamp();
 	if( IsInfo() ) return GetInfoData()->GetTimeStamp();
 
@@ -85,14 +84,14 @@ unsigned long long GreatDataPackets::GetTimeStamp(){
 	
 }
 
-UInt_t GreatDataPackets::GetTimeMSB(){
-	
+UInt_t GreatDataPackets::GetTimeMSB() const {
+
 	return ( ((unsigned long long)this->GetTimeStamp() >> 32) & 0xFFFFFFFF );
 	
 }
 
-UInt_t GreatDataPackets::GetTimeLSB(){
-	
+UInt_t GreatDataPackets::GetTimeLSB() const {
+
 	return (UInt_t)this->GetTimeStamp();
 	
 }

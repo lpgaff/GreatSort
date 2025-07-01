@@ -53,16 +53,11 @@ void GreatConverter::MakeTree() {
 	// Create Root tree
 	const int splitLevel = 2; // don't split branches = 0, full splitting = 99
 	const int bufsize = sizeof(GreatCaenData) + sizeof(GreatInfoData);
-	output_tree = new TTree( "great", "great" );
-	data_packet = std::make_unique<GreatDataPackets>();
-	output_tree->Branch( "data", "GreatDataPackets", data_packet.get(), bufsize, splitLevel );
-
-	sorted_tree = (TTree*)output_tree->CloneTree(0);
-	sorted_tree->SetName("great_sort");
-	sorted_tree->SetTitle( "Time sorted, calibrated Great data" );
+	sorted_tree = new TTree( "great_sort", "Time sorted, calibrated Great data" );
+	write_packet = std::make_shared<GreatDataPackets>();
+	sorted_tree->Branch( "data", "GreatDataPackets", write_packet.get(), bufsize, splitLevel );
 	sorted_tree->SetDirectory( output_file->GetDirectory("/") );
-	output_tree->SetDirectory( output_file->GetDirectory("/") );
-	
+
 	output_tree->SetAutoFlush(-10e6);
 	sorted_tree->SetAutoFlush(-10e6);
 
@@ -726,9 +721,13 @@ void GreatConverter::FinishCAENData(){
 		// Set this data and fill event to tree
 		// Also add the time offset when we do this
 		caen_data->SetTimeStamp( caen_data->GetTimeStamp() + cal->CaenTime( caen_data->GetModule(), caen_data->GetChannel() ) );
-		data_packet->SetData( caen_data );
-		if( !flag_source ) output_tree->Fill();
-		data_packet->ClearData();
+		if( !flag_source ) {
+			std::shared_ptr<GreatDataPackets> data_packet =
+				std::make_shared<GreatDataPackets>( caen_data );
+			data_vector.emplace_back( data_packet );
+			data_map.push_back( std::make_pair<unsigned long,double>(
+				data_vector.size()-1, data_packet->GetTime() ) );
+		}
 
 	}
 	
@@ -797,11 +796,15 @@ void GreatConverter::ProcessInfoData(){
 		info_data->SetModule( my_mod_id );
 		info_data->SetTimeStamp( my_tm_stp );
 		info_data->SetCode( my_info_code );
-		data_packet->SetData( info_data );
-		if( !flag_source ) output_tree->Fill();
-		info_data->Clear();
-		data_packet->ClearData();
-		
+
+		if( !flag_source ) {
+			std::shared_ptr<GreatDataPackets> data_packet =
+				std::make_shared<GreatDataPackets>( info_data );
+			data_vector.emplace_back( data_packet );
+			data_map.push_back( std::make_pair<unsigned long,double>(
+				data_vector.size()-1, data_packet->GetTime() ) );
+		}
+
 	}
 
 	return;
@@ -937,12 +940,6 @@ int GreatConverter::ConvertFile( std::string input_file_name,
 		// Check if we are before the start block or after the end block
 		if( nblock < start_block || ( (long)nblock > end_block && end_block > 0 ) )
 			continue;
-		
-		
-		// Each time we have completed a block, optimise filling
-		if( nblock == start_block + 1 )
-			output_tree->OptimizeBaskets(30e6);	 // output tree basket size max 30 MB
-
 
 		// Process current block. If it's the end, stop.
 		if( !ProcessCurrentBlock( nblock ) ) break;
@@ -960,86 +957,75 @@ int GreatConverter::ConvertFile( std::string input_file_name,
 	
 }
 
-unsigned long long GreatConverter::SortTree(){
-	
+bool GreatConverter::MapComparator( const std::pair<unsigned long,double> &lhs,
+								    const std::pair<unsigned long,double> &rhs ) {
+
+	return lhs.second < rhs.second;
+
+}
+
+void GreatConverter::SortDataMap() {
+
+	// Sort the data vector as we go along
+	std::sort( data_map.begin(), data_map.end(), MapComparator );
+
+}
+
+unsigned long long GreatConverter::SortTree( bool do_sort ){
+
 	// Reset the sorted tree so it's empty before we start
 	sorted_tree->Reset();
 	
-	// Load the full tree if possible
-	output_tree->SetMaxVirtualSize(2e9); // 2GB
-	sorted_tree->SetMaxVirtualSize(2e9); // 2GB
-	output_tree->LoadBaskets(1e9); 		 // Load 1 GB of data to memory
-	
+	// Get number of data packets
+	long long int n_ents = data_vector.size();	// std::vector method
+
 	// Check we have entries and build time-ordered index
-	if( output_tree->GetEntries() ){
-
-		std::cout << "\n Building time-ordered index of events..." << std::endl;
-		output_tree->BuildIndex( "data.GetTimeStamp()" );
-
+	if( n_ents && do_sort ) {
+		std::cout << "Time ordering " << n_ents << " data items..." << std::endl;
+		SortDataMap();
 	}
 	else return 0;
-	
-	// Get index and prepare for sorting
-	TTreeIndex *att_index = (TTreeIndex*)output_tree->GetTreeIndex();
-	unsigned long long nb_idx = att_index->GetN();
-	std::cout << " Sorting: size of the sorted index = " << nb_idx << std::endl;
 
 	// Loop on t_raw entries and fill t
-	for( unsigned long i = 0; i < nb_idx; ++i ) {
-		
-		// Clean up old data
-		data_packet->ClearData();
-		
-		// Get time-ordered event index
-		unsigned long long idx = att_index->GetIndex()[i];
-		
-		// Check if the input or output trees are filling
-		if( output_tree->MemoryFull(30e6) )
-			output_tree->DropBaskets();
-		if( sorted_tree->MemoryFull(30e6) )
-			sorted_tree->FlushBaskets();
-		
-		// Get entry from unsorted tree and fill to sorted tree
-		output_tree->GetEntry( idx );
-		sorted_tree->Fill();
+	std::cout << "Writing time-ordered data items to the output tree..." << std::endl;
+	for( long long int i = 0; i < n_ents; ++i ) {
 
-		// Optimise filling tree
-		if( i == 100 ) sorted_tree->OptimizeBaskets(30e6);	 // sorted tree basket size max 30 MB
+		// Get the data item back from the vector
+		unsigned long idx = data_map[i].first;
+		write_packet->SetData( data_vector[idx] );
+
+		// Fill the sorted tree
+		sorted_tree->Fill();
 
 		// Progress bar
 		bool update_progress = false;
-		if( nb_idx < 200 )
+		if( n_ents < 200 )
 			update_progress = true;
-		else if( i % (nb_idx/100) == 0 || i+1 == nb_idx )
+		else if( i % (n_ents/100) == 0 || i+1 == n_ents )
 			update_progress = true;
-		
-		// Print progress
+
 		if( update_progress ) {
-			
+
 			// Percent complete
-			float percent = (float)(i+1)*100.0/(float)nb_idx;
-			
+			float percent = (float)(i+1)*100.0/(float)n_ents;
+
 			// Progress bar in GUI
 			if( _prog_ ) {
-				
+
 				prog->SetPosition( percent );
 				gSystem->ProcessEvents();
-				
+
 			}
-			
+
 			// Progress bar in terminal
 			std::cout << " " << std::setw(6) << std::setprecision(4);
 			std::cout << percent << "%    \r";
 			std::cout.flush();
 
-		}
+		} // progress bar
 
-	}
-	
-	// Reset the output tree so it's empty after we've finished
-	output_tree->FlushBaskets();
-	output_tree->Reset();
+	} // i
 
-	return nb_idx;
-	
+	return n_ents;
+
 }

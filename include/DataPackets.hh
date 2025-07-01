@@ -98,21 +98,42 @@ class GreatDataPackets : public TObject {
 	
 public:
 	
-	inline bool	IsCaen() { return caen_packets.size(); };
-	inline bool	IsInfo() { return info_packets.size(); };
-	
+	GreatDataPackets() {};
+	~GreatDataPackets() {};
+
+	GreatDataPackets( std::shared_ptr<GreatDataPackets> in ) { SetData(in); };
+	GreatDataPackets( std::shared_ptr<GreatCaenData> in ){ SetData(in); };
+	GreatDataPackets( std::shared_ptr<GreatInfoData> in ){ SetData(in); };
+
+	inline bool	IsCaen() const { return caen_packets.size(); };
+	inline bool	IsInfo() const { return info_packets.size(); };
+
+	void SetData( std::shared_ptr<GreatDataPackets> in ){
+		if( in->IsCaen() ) SetData( in->GetCaenData() );
+		if( in->IsInfo() ) SetData( in->GetInfoData() );
+	};
 	void SetData( std::shared_ptr<GreatCaenData> data );
 	void SetData( std::shared_ptr<GreatInfoData> data );
 
 	// These methods are not very safe for access
-	inline std::shared_ptr<GreatCaenData> GetCaenData() { return std::make_shared<GreatCaenData>( caen_packets.at(0) ); };
-	inline std::shared_ptr<GreatInfoData> GetInfoData() { return std::make_shared<GreatInfoData>( info_packets.at(0) ); };
-	
+	inline std::shared_ptr<GreatCaenData> GetCaenData() const {
+		return std::make_shared<GreatCaenData>( caen_packets.at(0) );
+	};
+	inline std::shared_ptr<GreatInfoData> GetInfoData() const {
+		return std::make_shared<GreatInfoData>( info_packets.at(0) );
+	};
+
 	// Complicated way to get the time...
-	double GetTime();
-	unsigned long long GetTimeStamp();
-	UInt_t GetTimeMSB();
-	UInt_t GetTimeLSB();
+	double GetTime() const;
+	unsigned long long GetTimeStamp() const;
+	UInt_t GetTimeMSB() const;
+	UInt_t GetTimeLSB() const;
+
+	// Sorting function to do time ordering
+	bool operator <( const GreatDataPackets &rhs ) const {
+		return( GetTime() < rhs.GetTime() );
+	};
+
 
 	void ClearData();
 
