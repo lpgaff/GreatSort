@@ -88,8 +88,9 @@ public:
 
 	// Resolve multiplicities etc
 	void TACFinder(); ///< Processes all hits in the TAC  that fall within the build window
-	void GammaRayFinder(); ///< Processes hits in the ScintArray and maybe HPGe in the future
-		
+	void CeBr3Finder(); ///< Processes hits in the CeBr3 detectors
+	void HPGeFinder(); ///< Processes hits in the HPGe detectors
+
 	inline TFile* GetFile(){ return output_file; }; ///< Getter for the output_file pointer
 	inline TTree* GetTree(){ return output_tree; }; ///< Getter for the output tree pointer
 	
@@ -97,11 +98,7 @@ public:
 		output_tree->ResetBranchAddresses();
 		PurgeOutput();
 		output_file->Close();
-		//input_tree->ResetBranchAddresses();
-		//nptool_tree->ResetBranchAddresses();
 		input_file->Close();
-		//if( in_data != nullptr ) delete in_data;
-		//if( sim_data != nullptr ) delete sim_data;
 		log_file.close(); //?? to close or not to close?
 	}; ///< Closes the output files from this class
 	inline void PurgeOutput(){ output_file->Purge(2); }
@@ -125,7 +122,8 @@ private:
 
 	/// Event structures
 	std::shared_ptr<GreatTACEvt> tac_evt;
-	std::shared_ptr<GreatGammaRayEvt> gamma_evt;
+	std::shared_ptr<GreatCeBr3Evt> cebr3_evt;
+	std::shared_ptr<GreatHPGeEvt> hpge_evt;
 
 	/// Outputs
 	TFile *output_file; ///< Pointer to the output ROOT file containing events
@@ -179,23 +177,31 @@ private:
 	bool				mythres;	///< above threshold?
 
 	// Data variables
-	unsigned char		myid;		///< generic detector id
+	unsigned short		myid;		///< generic detector id
+	unsigned short		myseg;		///< generic segment id
 
 
-	// MWPC variables
-	std::vector<float>			tactd_list;	///< list of TAC time difference, calibrated to ps
-	std::vector<double>			tacts_list;	///< list of TAC time stamps (ns)
-	std::vector<char>			tacid_list;	///< list of TAC IDs for the MWPC
+	// TAC variables
+	std::vector<float>			tac_td_list;	///< list of TAC time difference, calibrated to ps
+	std::vector<double>			tac_ts_list;	///< list of TAC time stamps (ns)
+	std::vector<short>			tac_id_list;	///< list of TAC IDs for the MWPC
 
-	// Gamma-ray variables
-	std::vector<float>			gen_list;	///< list of gamma-ray energies for GammaFinder
-	std::vector<double>			gts_list;	///< list of gamma-ray time stamps (ns) for GammaFinder
-	std::vector<char>			gid_list;	///< list of gamma-ray detectors ids for GammaFinder
+	// CeBr3 variables
+	std::vector<float>			cebr3_en_list;	///< list of CeBr3 energies for CeBr3Finder
+	std::vector<double>			cebr3_ts_list;	///< list of CeBr3 time stamps (ns) for CeBr3Finder
+	std::vector<short>			cebr3_id_list;	///< list of CeBr3 detectors ids for CeBr3Finder
+
+	// HPGe variables
+	std::vector<float>			hpge_en_list;	///< list of HPGe energies for HPGeFinder
+	std::vector<double>			hpge_ts_list;	///< list of HPGe time stamps (ns) for HPGeFinder
+	std::vector<short>			hpge_id_list;	///< list of HPGe detectors ids for HPGeFinder
+	std::vector<short>			hpge_seg_list;	///< list of HPGe segments ids for HPGeFinder
 
 	// Counters
 	unsigned int		hit_ctr;		///< Counts the number of hits that make up an event within a given file
 	unsigned int		tac_ctr;		///< Counts the number of TAC events within a given file
-	unsigned int		gamma_ctr;		///< Counts the number of Gamma-Ray events within a given file
+	unsigned int		cebr3_ctr;		///< Counts the number of CeBr3 events within a given file
+	unsigned int		hpge_ctr;		///< Counts the number of HPGe events within a given file
 	unsigned long		n_caen_data;	///< Counter for number of caen data packets in a file
 	unsigned long		n_info_data; 	///< Counter for number of info data packets in a file
 	unsigned long long	n_entries; 		///< Number of entries in the time-sorted data input tree
@@ -208,10 +214,15 @@ private:
 	std::vector<TH1F*> htac_id; ///< The TAC singles spectra in the MWPC
 
 	// GammaRay histograms
-	TH1F *gamma_E;			///< Sum gamma-ray energy histogram
-	TH2F *gamma_E_vs_det;	///< Gamma-ray energy verus detector ID
-	TH2F *gamma_gamma_E;	///< Gamma-gamma matrix, no prompt time condition
-	TH1F *gamma_gamma_td;	///< Gamma-gamma time difference
+	TH1F *cebr3_E;						///< Sum gamma-ray energy histogram for CeBr3 detectors
+	TH2F *cebr3_E_vs_det;				///< Gamma-ray energy verus detector ID for CeBr3 detectors
+	TH2F *cebr3_cebr3_E;				///< Gamma-gamma matrix, no prompt time condition for CeBr3 detectors
+	TH1F *cebr3_cebr3_td;				///< Gamma-gamma time difference for CeBr3 detectors
+	TH1F *hpge_E;						///< Sum gamma-ray energy histogram for HPGe detectors
+	TH2F *hpge_E_vs_det;				///< Gamma-ray energy verus detector ID for HPGe detectors
+	TH2F *hpge_hpge_E;					///< Gamma-gamma matrix, no prompt time condition for HPGe detectors
+	TH1F *hpge_hpge_td;					///< Gamma-gamma time difference for HPGe detectors
+	std::vector<TH1F*> hpge_seg_td;		///< Gamma-gamma time difference for HPGe core and segments
 
 };
 

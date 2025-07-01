@@ -1,6 +1,8 @@
 #include "GreatEvts.hh"
 
 ClassImp(GreatTACEvt)
+ClassImp(GreatCeBr3Evt)
+ClassImp(GreatHPGeEvt)
 ClassImp(GreatGammaRayEvt)
 ClassImp(GreatDetectorEvt)
 ClassImp(GreatEvts)
@@ -19,10 +21,19 @@ double GreatEvts::GetTime() const {
 
 	}
 
-	// Check minimum time from all gamma-ray events
-	for( unsigned int i = 0; i < this->GetGammaRayMultiplicity(); ++i ){
+	// Check minimum time from all CeBr3 events
+	for( unsigned int i = 0; i < this->GetCeBr3Multiplicity(); ++i ){
 
-		double cur_time = this->GetGammaRayEvt(i)->GetTime();
+		double cur_time = this->GetCeBr3Evt(i)->GetTime();
+		if( cur_time < min_time || min_time < 0 )
+			min_time = cur_time;
+
+	}
+
+	// Check minimum time from all HPGe events
+	for( unsigned int i = 0; i < this->GetHPGeMultiplicity(); ++i ){
+
+		double cur_time = this->GetHPGeEvt(i)->GetTime();
 		if( cur_time < min_time || min_time < 0 )
 			min_time = cur_time;
 

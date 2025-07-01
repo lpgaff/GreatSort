@@ -84,7 +84,27 @@ protected:
 
 };
 
+class GreatCeBr3Evt : public GreatGammaRayEvt {
 
+public:
+
+
+protected:
+
+	ClassDef( GreatCeBr3Evt, 1 );
+
+};
+
+class GreatHPGeEvt : public GreatGammaRayEvt {
+
+public:
+
+
+protected:
+
+	ClassDef( GreatHPGeEvt, 1 );
+
+};
 
 
 class GreatEvts : public TObject {
@@ -100,26 +120,43 @@ public:
 		GreatTACEvt fill_evt( *(event.get()) );
 		tac_event.push_back( fill_evt );
 	};
-	void AddEvt( std::shared_ptr<GreatGammaRayEvt> event ){
-		GreatGammaRayEvt fill_evt( *(event.get()) );
-		gamma_event.push_back( fill_evt );
+	void AddEvt( std::shared_ptr<GreatCeBr3Evt> event ){
+		GreatCeBr3Evt fill_evt( *(event.get()) );
+		cebr3_event.push_back( fill_evt );
+	};
+	void AddEvt( std::shared_ptr<GreatHPGeEvt> event ){
+		GreatHPGeEvt fill_evt( *(event.get()) );
+		hpge_event.push_back( fill_evt );
 	};
 
 	inline unsigned int GetTACMultiplicity() const { return tac_event.size(); };
-	inline unsigned int GetGammaRayMultiplicity() const { return gamma_event.size(); };
+	inline unsigned int GetGammaRayMultiplicity() const {
+		return cebr3_event.size() + hpge_event.size();
+	};
+	inline unsigned int GetCeBr3Multiplicity() const {
+		return cebr3_event.size();
+	};
+	inline unsigned int GetHPGeMultiplicity() const {
+		return hpge_event.size();
+	};
 
 	inline std::shared_ptr<GreatTACEvt> GetTACEvt( unsigned int i ) const {
 		if( i < tac_event.size() ) return std::make_shared<GreatTACEvt>( tac_event.at(i) );
 		else return nullptr;
 	};
-	inline std::shared_ptr<GreatGammaRayEvt> GetGammaRayEvt( unsigned int i ) const {
-		if( i < gamma_event.size() ) return std::make_shared<GreatGammaRayEvt>( gamma_event.at(i) );
+	inline std::shared_ptr<GreatCeBr3Evt> GetCeBr3Evt( unsigned int i ) const {
+		if( i < cebr3_event.size() ) return std::make_shared<GreatCeBr3Evt>( cebr3_event.at(i) );
+		else return nullptr;
+	};
+	inline std::shared_ptr<GreatHPGeEvt> GetHPGeEvt( unsigned int i ) const {
+		if( i < hpge_event.size() ) return std::make_shared<GreatHPGeEvt>( hpge_event.at(i) );
 		else return nullptr;
 	};
 
 	void ClearEvt(){
 		std::vector<GreatTACEvt>().swap(tac_event);
-		std::vector<GreatGammaRayEvt>().swap(gamma_event);
+		std::vector<GreatCeBr3Evt>().swap(cebr3_event);
+		std::vector<GreatHPGeEvt>().swap(hpge_event);
 	};
 	double GetTime() const;
 
@@ -127,9 +164,10 @@ public:
 protected:
 
 	std::vector<GreatTACEvt> tac_event;
-	std::vector<GreatGammaRayEvt> gamma_event;
+	std::vector<GreatCeBr3Evt> cebr3_event;
+	std::vector<GreatHPGeEvt> hpge_event;
 
-	ClassDef( GreatEvts, 2 )
+	ClassDef( GreatEvts, 3 )
 
 };
 

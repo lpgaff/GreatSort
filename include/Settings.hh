@@ -53,7 +53,8 @@ public:
 
 	// Event builder
 	inline double GetEventWindow(){ return event_window; };
-	inline double GetGammaRayHitWindow(){ return gamma_hit_window; }
+	inline double GetCeBr3HitWindow(){ return cebr3_hit_window; }
+	inline double GetHPGeHitWindow(){ return hpge_hit_window; }
 
 	
 	// Data settings
@@ -62,14 +63,20 @@ public:
 
 
 	// TACs
-	inline unsigned char GetNumberOfTACs(){ return n_tacs; };
-	char GetTACID( unsigned char mod, unsigned char ch );
+	inline unsigned short GetNumberOfTACs(){ return n_tacs; };
+	short GetTACID( unsigned char mod, unsigned char ch );
 	bool IsTAC( unsigned char mod, unsigned char ch );
 
-	// Gamma-ray detectors
-	inline unsigned char GetNumberOfGammaRayDetectors(){ return n_gamma_detector; };
-	char GetGammaRayDetector( unsigned char mod, unsigned char ch );
-	bool IsGammaRay( unsigned char mod, unsigned char ch );
+	// CeBr3 detectors
+	inline unsigned short GetNumberOfCeBr3Detectors(){ return n_cebr3_detector; };
+	short GetCeBr3Detector( unsigned char mod, unsigned char ch );
+	bool IsCeBr3( unsigned char mod, unsigned char ch );
+
+	// HPGe detectors
+	inline unsigned short GetNumberOfHPGeDetectors(){ return n_hpge_detector; };
+	short GetHPGeDetector( unsigned char mod, unsigned char ch );
+	short GetHPGeSegment( unsigned char mod, unsigned char ch );
+	bool IsHPGe( unsigned char mod, unsigned char ch );
 
 
 private:
@@ -89,7 +96,8 @@ private:
 	
 	// Event builder
 	double event_window;			///< Event builder time window in ns
-	double gamma_hit_window;		///< Time window in ns for correlating Gamma-Gamma hits (addback?)
+	double cebr3_hit_window;		///< Time window in ns for correlating CeBr3 (addback?)
+	double hpge_hit_window;			///< Time window in ns for correlating HPGe hits (addback?)
 
 	
 	// Data format
@@ -98,19 +106,28 @@ private:
 
 	
 	// TACs
-	unsigned char n_tacs;						///< Number of TAC modules
+	unsigned short n_tacs;						///< Number of TAC modules
 	std::vector<unsigned char> tac_mod;			///< Module number of each TAC input
 	std::vector<unsigned char> tac_ch;			///< Channel number of each TAC input
-	std::vector<std::vector<char>> tac_id;		///< A channel map for the TAC modules
+	std::vector<std::vector<short>> tac_id;		///< A channel map for the TAC modules
 
 	
-	// Gamma-ray detectors
-	unsigned char n_gamma_detector;				///< Number of CeBr gamma-ray detectors
-	std::vector<unsigned char> gamma_mod;		///< A list of module numbers for each CeBr gamma-ray  detectors
-	std::vector<unsigned char> gamma_ch;		///< A list of channel numbers for each CeBr gamma-ray  detectors
-	std::vector<std::vector<char>> gamma_id;	///< A channel map for the CeBr gamma-ray  detectors (-1 if not an CeBr gamma-ray detector)
+	// CeBr3 detectors
+	unsigned short n_cebr3_detector;				///< Number of CeBr gamma-ray detectors
+	std::vector<unsigned char> cebr3_mod;		///< A list of module numbers for each CeBr gamma-ray  detectors
+	std::vector<unsigned char> cebr3_ch;		///< A list of channel numbers for each CeBr gamma-ray  detectors
+	std::vector<std::vector<short>> cebr3_id;	///< A channel map for the CeBr gamma-ray  detectors (-1 if not an CeBr gamma-ray detector)
 
-	
+
+	// HPGe detectors
+	unsigned short n_hpge_detector;						///< Number of HPGe gamma-ray detectors
+	unsigned short n_hpge_segments;						///< Number of HPGe gamma-ray segments
+	std::vector<std::vector<unsigned char>> hpge_mod;	///< A list of module numbers for each HPGe gamma-ray detector and segment
+	std::vector<std::vector<unsigned char>> hpge_ch;	///< A list of channel numbers for each HPGe gamma-ray detector and segment
+	std::vector<std::vector<short>> hpge_id;				///< A channel map for the HPGe gamma-ray detectors (-1 if not an HPGe gamma-ray detector)
+	std::vector<std::vector<short>> hpge_seg;			///< A channel map for the HPGe gamma-ray segment (-1 if not an HPGe gamma-ray detector)
+
+
 };
 
 #endif

@@ -36,18 +36,33 @@
 # Event builder #
 #---------------#
 #EventWindow: 3e3 		# in ns. Default is 3 µs
-#GammaRayHitWindow: 500	# in ns. Default is 500 ns
+#CeBr3HitWindow: 500	# in ns. Default is 500 ns
+#HPGeHitWindow: 500		# in ns. Default is 500 ns
 
 
 
-#---------------------#
-# Gamma-ray Detectors #
-#---------------------#
-#NumberOfGammaRayDetectors: 2	# This is default 2
-#GammaRay_0.Module: 0			# List of detectors
-#GammaRay_0.Channel: 0			# and their mapping
-#GammaRay_1.Module: 0
-#GammaRay_1.Channel: 1
+#---------------------------------#
+# CeBr3 Detectors (not segmented) #
+#---------------------------------#
+#NumberOfCeBr3Detectors: 0		# This is default 0
+#CeBr3_0.Module: 0				# List of detectors
+#CeBr3_0.Channel: 0				# and their mapping
+#CeBr3_1.Module: 0
+#CeBr3_1.Channel: 1
+
+#----------------------------#
+# HPGe Detectors (segmented) #
+#----------------------------#
+#NumberOfHPGeDetectors: 0		# This is default 0
+#NumberOfHPGeSegments: 1		# Core is always segment 0, others with segment ID >= 1
+#HPGe_0_0.Module: 0				# List of detectors
+#HPGe_0_0.Channel: 0			# and their mapping
+#HPGe_0_1.Module: 0
+#HPGe_0_1.Channel: 0			# this the first segment of 0th detector
+#HPGe_1_0.Module: 0
+#HPGe_1_0.Channel: 1			# this the core of 1st detector
+#HPGe_1_1.Module: 0
+#HPGe_1_1.Channel: 1			# this the first segment of 1st detector
 
 
 #-------------#

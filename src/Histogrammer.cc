@@ -123,14 +123,14 @@ unsigned long GreatHistogrammer::FillHists() {
 		double tdiff;
 		
 		// Loop over gamma-ray events
-		for( unsigned int j = 0; j < read_evts->GetGammaRayMultiplicity(); ++j ){
-			
+		for( unsigned int j = 0; j < read_evts->GetCeBr3Multiplicity(); ++j ){
+
 			// Loop over gamma-ray events
-			for( unsigned int k = j+1; k < read_evts->GetGammaRayMultiplicity(); ++k ){
-				
+			for( unsigned int k = j+1; k < read_evts->GetCeBr3Multiplicity(); ++k ){
+
 				// Time difference
-				double tdiff = read_evts->GetGammaRayEvt(j)->GetTime();
-				tdiff -= read_evts->GetGammaRayEvt(k)->GetTime();
+				double tdiff = read_evts->GetCeBr3Evt(j)->GetTime();
+				tdiff -= read_evts->GetCeBr3Evt(k)->GetTime();
 				gamma_gamma_td->Fill( tdiff );
 				gamma_gamma_td->Fill( -tdiff );
 				
@@ -140,7 +140,7 @@ unsigned long GreatHistogrammer::FillHists() {
 			for( unsigned int k = 0; k < read_evts->GetTACMultiplicity(); ++k ){
 				
 				// Time difference
-				double tdiff = read_evts->GetGammaRayEvt(j)->GetTime();
+				double tdiff = read_evts->GetCeBr3Evt(j)->GetTime();
 				tdiff -= read_evts->GetTACEvt(k)->GetTime();
 				gamma_gamma_td->Fill( -tdiff );
 				

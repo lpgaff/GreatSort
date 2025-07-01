@@ -12,6 +12,8 @@
 #pragma link C++ class GreatReaction+;
 #pragma link C++ class GreatEvts+;
 #pragma link C++ class GreatTACEvt+;
+#pragma link C++ class GreatHPGeEvt+;
+#pragma link C++ class GreatCeBr3Evt+;
 #pragma link C++ class GreatGammaRayEvt+;
 #pragma link C++ class GreatDetectorEvt+;
 #pragma link C++ class GreatDataPackets+;

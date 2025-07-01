@@ -46,7 +46,8 @@ void GreatEventBuilder::StartFile(){
 	n_info_data	= 0;
 
 	tac_ctr		= 0;
-	gamma_ctr	= 0;
+	cebr3_ctr	= 0;
+	hpge_ctr	= 0;
 
 	for( unsigned int i = 0; i < set->GetNumberOfCAENModules(); ++i ) {
 
@@ -107,7 +108,8 @@ void GreatEventBuilder::SetOutput( std::string output_file_name ) {
 	// These are the branches we need
 	write_evts	= std::make_unique<GreatEvts>();
 	tac_evt		= std::make_shared<GreatTACEvt>();
-	gamma_evt	= std::make_shared<GreatGammaRayEvt>();
+	cebr3_evt	= std::make_shared<GreatCeBr3Evt>();
+	hpge_evt	= std::make_shared<GreatHPGeEvt>();
 
 	// ------------------------------------------------------------------------ //
 	// Create output file and create events tree
@@ -139,13 +141,18 @@ void GreatEventBuilder::Initialise(){
 	hit_ctr = 0;
 	
 	// Now swap all these vectors with empty vectors to ensure they are fully cleared
-	std::vector<float>().swap(tactd_list);
-	std::vector<double>().swap(tacts_list);
-	std::vector<char>().swap(tacid_list);
+	std::vector<float>().swap(tac_td_list);
+	std::vector<double>().swap(tac_ts_list);
+	std::vector<short>().swap(tac_id_list);
 
-	std::vector<float>().swap(gen_list);
-	std::vector<double>().swap(gts_list);
-	std::vector<char>().swap(gid_list);
+	std::vector<float>().swap(cebr3_en_list);
+	std::vector<double>().swap(cebr3_ts_list);
+	std::vector<short>().swap(cebr3_id_list);
+
+	std::vector<float>().swap(hpge_en_list);
+	std::vector<double>().swap(hpge_ts_list);
+	std::vector<short>().swap(hpge_id_list);
+	std::vector<short>().swap(hpge_seg_list);
 
 	write_evts->ClearEvt();
 	
@@ -257,27 +264,42 @@ unsigned long GreatEventBuilder::BuildEvents() {
 				
 				myid = set->GetTACID( mymod, mych );
 
-				tactd_list.push_back( myenergy );
-				tacts_list.push_back( mytime );
-				tacid_list.push_back( myid );
+				tac_td_list.push_back( myenergy );
+				tac_ts_list.push_back( mytime );
+				tac_id_list.push_back( myid );
 
 				hit_ctr++; // increase counter for bits of data included in this event
 
 			}
 			
-			// Is it a Gamma-ray?
-			else if( set->IsGammaRay( mymod, mych ) && mythres ) {
-			
-				myid = set->GetGammaRayDetector( mymod, mych );
-				
-				gen_list.push_back( myenergy );
-				gts_list.push_back( mytime );
-				gid_list.push_back( myid );
-				
+			// Is it a CeBr3?
+			else if( set->IsCeBr3( mymod, mych ) && mythres ) {
+
+				myid = set->GetCeBr3Detector( mymod, mych );
+
+				cebr3_en_list.push_back( myenergy );
+				cebr3_ts_list.push_back( mytime );
+				cebr3_id_list.push_back( myid );
+
 				hit_ctr++; // increase counter for bits of data included in this event
 
 			}
-			
+
+			// Is it a HPGe?
+			else if( set->IsHPGe( mymod, mych ) && mythres ) {
+
+				myid = set->GetHPGeDetector( mymod, mych );
+				myseg = set->GetHPGeSegment( mymod, mych );
+
+				hpge_en_list.push_back( myenergy );
+				hpge_ts_list.push_back( mytime );
+				hpge_id_list.push_back( myid );
+				hpge_seg_list.push_back( myseg );
+
+				hit_ctr++; // increase counter for bits of data included in this event
+
+			}
+
 
 			// Is it the start event?
 			if( caen_time_start.at( mymod ) == 0 )
@@ -365,11 +387,13 @@ unsigned long GreatEventBuilder::BuildEvents() {
 				// Build array events, recoils, etc
 				//----------------------------------
 				TACFinder();		// add an TACEvt for pair of TAC events
-				GammaRayFinder();	// add a GammaRay event for CeBr detectors
+				CeBr3Finder();		// add a gamma-ray event for CeBr detectors
+				HPGeFinder();		// add a gamma-ray event for HPGe detectors
 
 				// Fill only if we have some physics events
 				if( write_evts->GetTACMultiplicity() ||
-					write_evts->GetGammaRayMultiplicity() )
+				    write_evts->GetCeBr3Multiplicity() ||
+					write_evts->GetHPGeMultiplicity() )
 					output_tree->Fill();
 
 			}
@@ -426,7 +450,8 @@ unsigned long GreatEventBuilder::BuildEvents() {
 	}
 	ss_log << "  Info data packets = " << n_info_data << std::endl;
 	ss_log << "   TAC events = " << tac_ctr << std::endl;
-	ss_log << "   Gamma-ray events = " << gamma_ctr << std::endl;
+	ss_log << "   CeBr3 events = " << cebr3_ctr << std::endl;
+	ss_log << "   HPGe events = " << hpge_ctr << std::endl;
 	ss_log << "  Tree entries = " << output_tree->GetEntries() << std::endl;
 
 	std::cout << ss_log.str();
@@ -457,17 +482,17 @@ void GreatEventBuilder::TACFinder() {
 	//std::cout << __PRETTY_FUNCTION__ << std::endl;
 	
 	// Loop over TAC events
-	for( unsigned int i = 0; i < tactd_list.size(); ++i ) {
+	for( unsigned int i = 0; i < tac_td_list.size(); ++i ) {
 
 		// TAC singles spectra
-		htac_id[tacid_list[i]]->Fill( tactd_list[i] );
+		htac_id[tac_id_list[i]]->Fill( tac_td_list[i] );
 		
 		// Set the TAC event
-		tac_evt->SetTACTime( tactd_list[i] );
-		tac_evt->SetID( tacid_list[i] );
-		gamma_evt->SetSegment( 0 );
-		gamma_evt->SetType( 2 );
-		tac_evt->SetTime( tacts_list[i] );
+		tac_evt->SetTACTime( tac_td_list[i] );
+		tac_evt->SetID( tac_id_list[i] );
+		tac_evt->SetSegment( 0 );
+		tac_evt->SetType( 2 );
+		tac_evt->SetTime( tac_ts_list[i] );
 
 		// Write event to tree
 		write_evts->AddEvt( tac_evt );
@@ -483,56 +508,131 @@ void GreatEventBuilder::TACFinder() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-/// Builds gamma-ray events from the gamma-ray detectors and maybe also HPGe detectors in the future
-void GreatEventBuilder::GammaRayFinder() {
-	
-	//std::cout << __PRETTY_FUNCTION__ << std::endl;
-	
-	// Loop over gamma-ray events
-	for( unsigned int i = 0; i < gen_list.size(); ++i ) {
-		
-		// Histogram the data
-		gamma_E->Fill( gen_list[i] );
-		gamma_E_vs_det->Fill( gid_list[i], gen_list[i] );
+/// Builds gamma-ray events from the CeBr3 gamma-ray detectors
+void GreatEventBuilder::CeBr3Finder() {
 
-		// TODO: Here one could do reconstruction of core-segment hits
-		// it is not done yet, but there are examples in MiniballSort
-		// or contact me (liam.gaffney@liverpool.ac.uk) if you have a
-		// use case for segmented detectors and would like it implementing
+	//std::cout << __PRETTY_FUNCTION__ << std::endl;
+
+	// Loop over gamma-ray events
+	for( unsigned int i = 0; i < cebr3_en_list.size(); ++i ) {
+
+		// Histogram the data
+		cebr3_E->Fill( cebr3_en_list[i] );
+		cebr3_E_vs_det->Fill( cebr3_id_list[i], cebr3_en_list[i] );
 
 		// Coincidences
-		for( unsigned int j = i+1; j < gen_list.size(); ++j ) {
-			
-			double tdiff = gts_list[j] - gts_list[i];
-			gamma_gamma_td->Fill( tdiff );
-			gamma_gamma_td->Fill( -tdiff );
-			
+		for( unsigned int j = i+1; j < cebr3_en_list.size(); ++j ) {
+
+			double tdiff = cebr3_ts_list[j] - cebr3_ts_list[i];
+			cebr3_cebr3_td->Fill( tdiff );
+			cebr3_cebr3_td->Fill( -tdiff );
+
 			// Just prompt hits for now in a gg matrix
 			// This should really be used for add-back?
-			if( TMath::Abs(tdiff) < set->GetGammaRayHitWindow() ){
-				
-				gamma_gamma_E->Fill( gen_list[i], gen_list[j] );
-				gamma_gamma_E->Fill( gen_list[j], gen_list[i] );
+			if( TMath::Abs(tdiff) < set->GetCeBr3HitWindow() ){
+
+				cebr3_cebr3_E->Fill( cebr3_en_list[i], cebr3_en_list[j] );
+				cebr3_cebr3_E->Fill( cebr3_en_list[j], cebr3_en_list[i] );
 
 			} // prompt
-				
+
 		} // j
 
-		// Set the GammaRay event
-		gamma_evt->SetEnergy( gen_list[i] );
-		gamma_evt->SetID( gid_list[i] );
-		gamma_evt->SetSegment( 0 );
-		gamma_evt->SetType( 0 );
-		gamma_evt->SetTime( gts_list[i] );
+		// Set the CeBr3 event
+		cebr3_evt->SetEnergy( cebr3_en_list[i] );
+		cebr3_evt->SetID( cebr3_id_list[i] );
+		cebr3_evt->SetSegment( 0 );
+		cebr3_evt->SetType( 0 );
+		cebr3_evt->SetTime( cebr3_ts_list[i] );
 
 		// Write event to tree
-		write_evts->AddEvt( gamma_evt );
-		gamma_ctr++;
-		
+		write_evts->AddEvt( cebr3_evt );
+		cebr3_ctr++;
+
 	} // i
-	
+
 	return;
-	
+
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+/// Builds gamma-ray events from segmented HPGe gamma-ray detectors
+void GreatEventBuilder::HPGeFinder() {
+
+	//std::cout << __PRETTY_FUNCTION__ << std::endl;
+
+	// Loop over gamma-ray events
+	for( unsigned int i = 0; i < hpge_en_list.size(); ++i ) {
+
+		// Skip if we don't have a core
+		if( hpge_seg_list[i] != 0 ) continue;
+
+		// Segment matching
+		short seg_id_max = 0;
+		float seg_en_max = -1.0;
+
+		// Histogram the data
+		hpge_E->Fill( hpge_en_list[i] );
+		hpge_E_vs_det->Fill( hpge_id_list[i], hpge_en_list[i] );
+
+		// Coincidences and segment search
+		for( unsigned int j = 0; j < hpge_en_list.size(); ++j ) {
+
+			// Skip self-coincidences
+			if( i == j ) continue;
+
+			double tdiff = hpge_ts_list[j] - hpge_ts_list[i];
+
+			// If we're in the same detector, search for segment
+			if( hpge_id_list[i] == hpge_id_list[j] ) {
+
+				hpge_seg_td[hpge_id_list[i]]->Fill( tdiff );
+
+				// Check if this has the highest energy
+				if( hpge_en_list[i] > seg_en_max &&
+				    tdiff < set->GetHPGeHitWindow() ) {
+
+					seg_en_max = hpge_en_list[i];
+					seg_id_max = hpge_id_list[i];
+
+				}
+
+			} // same detector
+
+			// Otherwise we can make some coincidences
+			else {
+
+				hpge_hpge_td->Fill( tdiff );
+
+				// Just prompt hits for now in a gg matrix
+				// This should really be used for add-back?
+				if( TMath::Abs(tdiff) < set->GetHPGeHitWindow() ){
+
+					hpge_hpge_E->Fill( hpge_en_list[i], hpge_en_list[j] );
+					hpge_hpge_E->Fill( hpge_en_list[j], hpge_en_list[i] );
+
+				} // prompt
+
+			} // different detectors
+
+		} // j
+
+		// Set the HPGe event
+		hpge_evt->SetEnergy( hpge_en_list[i] );
+		hpge_evt->SetID( hpge_id_list[i] );
+		hpge_evt->SetSegment( seg_id_max );
+		hpge_evt->SetType( 0 );
+		hpge_evt->SetTime( hpge_ts_list[i] );
+
+		// Write event to tree
+		write_evts->AddEvt( hpge_evt );
+		hpge_ctr++;
+
+	} // i
+
+	return;
+
 }
 
 
@@ -574,33 +674,70 @@ void GreatEventBuilder::MakeHists(){
 		
 	}
 		
-	// -------------------- //
-	// Gamma-ray histograms //
-	// -------------------- //
-	dirname = "gammas";
+	// ---------------------------- //
+	// Gamma-ray histograms - CeBr3 //
+	// ---------------------------- //
+	dirname = "cebr3";
 	if( !output_file->GetDirectory( dirname.data() ) )
 		output_file->mkdir( dirname.data() );
 	output_file->cd( dirname.data() );
-	
 
-	hname = "gamma_E_vs_det";
-	htitle = "Gamma-ray energy vs detector ID;Detector ID;Energy [keV];Counts per 2 keV";
-	gamma_E_vs_det = new TH2F( hname.data(), htitle.data(),
-			set->GetNumberOfGammaRayDetectors()+1, -0.5, set->GetNumberOfGammaRayDetectors()+0.5, 4000, 0, 8000 );
 
-	hname = "gamma_E";
-	htitle = "Gamma-ray energy;Energy [keV];Counts per 2 keV";
-	gamma_E = new TH1F( hname.data(), htitle.data(), 4000, 0, 8000 );
+	hname = "cebr3_E_vs_det";
+	htitle = "Gamma-ray energy vs detector ID for CeBr3 detectors;Detector ID;Energy [keV];Counts per 2 keV";
+	cebr3_E_vs_det = new TH2F( hname.data(), htitle.data(),
+							  set->GetNumberOfCeBr3Detectors()+1, -0.5, set->GetNumberOfCeBr3Detectors()+0.5, 4000, 0, 8000 );
 
-	hname = "gamma_gamma_E";
-	htitle = "Gamma-ray energy coincidence matrix;Energy [keV];Energy [keV];Counts";
-	gamma_gamma_E = new TH2F( hname.data(), htitle.data(), 4000, 0, 8000, 4000, 0, 8000 );
+	hname = "cebr3_E";
+	htitle = "Gamma-ray energy for CeBr3 detectors;Energy [keV];Counts per 2 keV";
+	cebr3_E = new TH1F( hname.data(), htitle.data(), 4000, 0, 8000 );
 
-	hname = "gamma_gamma_td";
-	htitle = "Gamma-gamma time difference;#Deltat [ns];Counts";
-	gamma_gamma_td = new TH1F( hname.data(), htitle.data(), 600, -1.0*set->GetEventWindow()-20, set->GetEventWindow()+20 );
+	hname = "cebr3_cebr3_E";
+	htitle = "Gamma-ray energy coincidence matrix for CeBr3 detectors;Energy [keV];Energy [keV];Counts";
+	cebr3_cebr3_E = new TH2F( hname.data(), htitle.data(), 4000, 0, 8000, 4000, 0, 8000 );
 
-	
+	hname = "cebr3_cebr3_td";
+	htitle = "Gamma-gamma time difference for CeBr3 detectors;#Deltat [ns];Counts";
+	cebr3_cebr3_td = new TH1F( hname.data(), htitle.data(), 600, -1.0*set->GetEventWindow()-20, set->GetEventWindow()+20 );
+
+
+	// --------------------------- //
+	// Gamma-ray histograms - HPGe //
+	// --------------------------- //
+	dirname = "hpge";
+	if( !output_file->GetDirectory( dirname.data() ) )
+		output_file->mkdir( dirname.data() );
+	output_file->cd( dirname.data() );
+
+
+	hname = "hpge_E_vs_det";
+	htitle = "Gamma-ray energy vs detector ID for HPGe detectors;Detector ID;Energy [keV];Counts per 2 keV";
+	hpge_E_vs_det = new TH2F( hname.data(), htitle.data(),
+							  set->GetNumberOfHPGeDetectors()+1, -0.5, set->GetNumberOfHPGeDetectors()+0.5,
+							  4000, 0, 4000 );
+
+	hname = "hpge_E";
+	htitle = "Gamma-ray energy for HPGe detectors;Energy [keV];Counts per 2 keV";
+	hpge_E = new TH1F( hname.data(), htitle.data(), 4000, 0, 4000 );
+
+	hname = "hpge_hpge_E";
+	htitle = "Gamma-ray energy coincidence matrix for HPGe detectors;Energy [keV];Energy [keV];Counts";
+	hpge_hpge_E = new TH2F( hname.data(), htitle.data(), 4000, 0, 4000, 4000, 0, 4000 );
+
+	hname = "hpge_hpge_td";
+	htitle = "Gamma-gamma time difference for HPGe detectors;#Deltat [ns];Counts";
+	hpge_hpge_td = new TH1F( hname.data(), htitle.data(), 600, -1.0*set->GetEventWindow()-20, set->GetEventWindow()+20 );
+
+	hpge_seg_td.resize( set->GetNumberOfHPGeDetectors() );
+	for( unsigned int i = 0; i < set->GetNumberOfHPGeDetectors(); ++i ) {
+
+		hname = "hpge_seg_td_" + std::to_string(i);
+		htitle = "Core-segment time difference for HPGe detector " + std::to_string(i);
+		htitle += ";#Deltat [ns];Counts";
+		hpge_seg_td[i] = new TH1F( hname.data(), htitle.data(), 600, -1.0*set->GetEventWindow()-20, set->GetEventWindow()+20 );
+
+	}
+
 	return;
 	
 }
@@ -608,17 +745,6 @@ void GreatEventBuilder::MakeHists(){
 ////////////////////////////////////////////////////////////////////////////////
 /// This function empties the histograms used in the EventBuilder class; used during the DataSpy
 void GreatEventBuilder::ResetHists() {
-
-	for( unsigned int i = 0; i < htac_id.size(); i++ )
-		htac_id[i]->Reset("ICESM");
-	
-	gamma_E->Reset("ICESM");
-	gamma_E_vs_det->Reset("ICESM");
-	gamma_gamma_E->Reset("ICESM");
-	gamma_gamma_td->Reset("ICESM");
-
-	tdiff->Reset("ICESM");
-	tdiff_clean->Reset("ICESM");
 
 	return;
 
