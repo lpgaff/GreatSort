@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include "TObject.h"
+#include "TGraph.h"
 
 class GreatCaenData : public TObject {
 	
@@ -22,6 +23,20 @@ public:
 	inline unsigned short	GetSample( unsigned int i = 0 ) {
 		if( i >= trace.size() ) return 0;
 		return trace.at(i);
+	};
+	inline TGraph* GetTraceGraph() {
+		std::vector<int> x, y;
+		std::string title = "Trace for module " + std::to_string( GetModule() );
+		title += ", channel " + std::to_string( GetChannel() );
+		title += ";time [samples];signal";
+		for( unsigned short i = 0; i < GetTraceLength(); ++i ){
+			x.push_back( i );
+			y.push_back( GetSample(i) );
+		}
+		std::shared_ptr<TGraph> g = std::make_shared<TGraph>(
+															 GetTraceLength(), x.data(), y.data() );
+		g.get()->SetTitle( title.data() );
+		return (TGraph*)g.get()->Clone();
 	};
 	inline unsigned char	GetModule() { return mod; };
 	inline unsigned char	GetChannel() { return ch; };
