@@ -44,7 +44,15 @@ public:
 			return caen_fw[i];
 		else return "";
 	};
-	
+	inline unsigned int GetCAENTimeStampUnits( unsigned char mod ) {
+		if( this->GetCAENModel( mod ) == 1730 ) return 2;
+		else if( this->GetCAENModel( mod ) == 1725 ) return 4;
+		else if( this->GetCAENModel( mod ) == 1724 ) return 4;
+		else if( this->GetCAENModel( mod ) == 1740 ) return 16;
+		else return 8; // assume everything else is 125 MS/s
+	};
+
+
 	
 	// Info settings
 	inline unsigned char GetSyncCode(){ return sync_code; };

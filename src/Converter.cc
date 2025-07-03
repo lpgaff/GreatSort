@@ -500,10 +500,8 @@ void GreatConverter::ProcessCAENData(){
 	my_tm_stp_lsb = word_1 & 0x0FFFFFFF;  // 28 bits from 0
 	my_tm_stp = ( my_tm_stp_msb << 28 ) | my_tm_stp_lsb;
 	
-	// CAEN timestamps are 4 ns precision for V1725 and 2 ns for V1730
-	if( set->GetCAENModel( my_mod_id ) == 1730 ) my_tm_stp = my_tm_stp*2;
-	else if( set->GetCAENModel( my_mod_id ) == 1725 ) my_tm_stp = my_tm_stp*4;
-	else my_tm_stp = my_tm_stp*4;
+	// Get timestamp in the correct units
+	my_tm_stp *= set->GetCAENTimeStampUnits( my_mod_id );
 
 	// Make a test of whether we have new data
 	bool flag_new_data = false;
@@ -513,16 +511,17 @@ void GreatConverter::ProcessCAENData(){
 
 	// Make a test of whether we have finished a data packet
 	bool flag_finished = false;
-	if( flag_caen_data0 && ( flag_caen_data2 || flag_caen_data3 ) ) {
+	if( flag_caen_data0 ) {
 
 		// If we have the PSD firmware, we need the short energy too
 		if( set->GetCAENFirmware( caen_data->GetModule() ) == "PSD" ){
-			if( flag_caen_data1 ) flag_finished = true;
+			if( flag_caen_data1 && ( flag_caen_data2 || flag_caen_data3 ) ) flag_finished = true;
 		}
 
 		// but for the PHA, we just get one energy item
 		else {
 			flag_caen_data1 = true;
+			flag_caen_data3 = true;
 			flag_finished = true;
 		}
 
@@ -648,20 +647,14 @@ int GreatConverter::ProcessTraceData( int pos ){
 	my_tm_stp_lsb = word_1 & 0x0FFFFFFF;  // 28 bits from 0
 	my_tm_stp = ( my_tm_stp_msb << 28 ) | my_tm_stp_lsb;
 	
-	// CAEN timestamps are 4 ns precision for V1725 and 2 ns for V1730
-	if( set->GetCAENModel( my_mod_id ) == 1730 ) my_tm_stp = my_tm_stp*2;
-	else if( set->GetCAENModel( my_mod_id ) == 1725 ) my_tm_stp = my_tm_stp*4;
-	else my_tm_stp = my_tm_stp*4;
-	
-	// Make a CAEN data item
-	if( !flag_caen_data0 && !flag_caen_data1 && !flag_caen_data2 && !flag_caen_data3 ) {
-		
-		caen_data->SetTimeStamp( my_tm_stp );
-		caen_data->SetModule( my_mod_id );
-		caen_data->SetChannel( my_ch_id );
-	
-	}
-	
+	// Get timestamp in the correct units
+	my_tm_stp *= set->GetCAENTimeStampUnits( my_mod_id );
+
+	// Check the info because the trace comes first
+	caen_data->SetTimeStamp( my_tm_stp );
+	caen_data->SetModule( my_mod_id );
+	caen_data->SetChannel( my_ch_id );
+
 	// Get the samples from the trace
 	for( UInt_t j = 0; j < nsamples/4; j++ ){
 		
@@ -669,10 +662,7 @@ int GreatConverter::ProcessTraceData( int pos ){
 		ULong64_t sample_packet = GetWord(++pos);
 		
 		UInt_t block_test = ( sample_packet >> 32 ) & 0x00000000FFFFFFFF;
-		//unsigned char trace_test = ( sample_packet >> 62 ) & 0x0000000000000003;
-		unsigned char trace_test = 0;
-		
-		if( trace_test == 0 && block_test != 0x5E5E5E5E ){
+		if( block_test != 0x5E5E5E5E ){
 			
 			// Pairs need to be swapped
 			caen_data->AddSample( ( sample_packet >> 32 ) & 0x0000000000003FFF );
@@ -684,10 +674,10 @@ int GreatConverter::ProcessTraceData( int pos ){
 		
 		else {
 			
-			std::cout << "This isn't a trace anymore..." << std::endl;
-			std::cout << "Sample #" << j << " of " << nsamples << std::endl;
-			std::cout << " trace_test = " << (int)trace_test << std::endl;
-			
+			//std::cout << "This isn't a trace anymore..." << std::endl;
+			//std::cout << "Sample #" << j << " of " << nsamples << std::endl;
+			//std::cout << " trace_test = " << (int)trace_test << std::endl;
+
 			pos--;
 			break;
 			
