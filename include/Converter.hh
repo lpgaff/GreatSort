@@ -233,6 +233,7 @@ private:
 	// Histograms
 	std::vector<TProfile*> hcaen_hit;
 	std::vector<TProfile*> hcaen_ext;
+	std::vector<std::vector<TH1I*>> hcaen_trace;
 	std::vector<std::vector<TH1F*>> hcaen_qlong;
 	std::vector<std::vector<TH1F*>> hcaen_qshort;
 	std::vector<std::vector<TH1F*>> hcaen_qdiff;

@@ -180,7 +180,8 @@ void* monitor_run( void* ptr ){
 	conv_mon->SetOutput( "monitor_singles.root" );
 	conv_mon->MakeTree();
 	conv_mon->MakeHists();
-	
+	conv_mon->StartFile();
+
 	// Update server settings
 	// title of web page
 	std::string toptitle;
@@ -210,6 +211,9 @@ void* monitor_run( void* ptr ){
 			// Convert - from shared memory
 			else {
 				
+				// Clear the old data from memroy and reset counters
+				conv_mon->StartFile();
+
 				// First check if we have data
 				std::cout << "Looking for data from DataSpy" << std::endl;
 				spy_length = myspy.Read( file_id, (char*)buffer, calfiles->myset->GetBlockSize() );
@@ -218,34 +222,44 @@ void* monitor_run( void* ptr ){
 					gSystem->Sleep( 2e3 );
 					continue;
 				}
-				
+
 				// Keep reading until we have all the data
 				// This could be multi-threaded to process data and go back to read more
+				int wait_time = 50; // ms - between each read
 				int block_ctr = 0;
 				long byte_ctr = 0;
 				int poll_ctr = 0;
-				while( block_ctr < 200 && poll_ctr < 1000 ){
+				while( block_ctr < 1024 && poll_ctr < 1000 * mon_time / wait_time ){
 
 					//std::cout << "Got some data from DataSpy, block " << block_ctr << std::endl;
 					if( spy_length > 0 ) {
 						nblocks = conv_mon->ConvertBlock( (char*)buffer, 0 );
 						block_ctr += nblocks;
+						//gSystem->Sleep( 1 ); // wait 1 ms between each read
 					}
-					
-					// Read a new block
-					gSystem->Sleep( 1 ); // wait 1 ms between each read
-					spy_length = myspy.Read( file_id, (char*)buffer, calfiles->myset->GetBlockSize() );
+					else {
+						gSystem->Sleep( wait_time ); // wait for new data in buffer
+						poll_ctr++;
+					}
 
+					// Read a new block
+					spy_length = myspy.Read( file_id, (char*)buffer, calfiles->myset->GetBlockSize() );
 					byte_ctr += spy_length;
-					poll_ctr++;
-					
+
 				}
 
-				std::cout << "Got " << byte_ctr << " bytes of data from DataSpy" << std::endl;
+				// Finish the last block
+				if( spy_length > 0 ) {
+					nblocks = conv_mon->ConvertBlock( (char*)buffer, 0 );
+					block_ctr += nblocks;
+				}
+
+				std::cout << "Got " << byte_ctr << " bytes of data in " << block_ctr << " blocks from DataSpy" << std::endl;
 
 				// Sort the packets we just got, then do the rest of the analysis
 				conv_mon->SortTree();
 				conv_mon->PurgeOutput();
+
 
 			}
 			
@@ -616,7 +630,7 @@ int main( int argc, char *argv[] ){
 	if( flag_spy ) {
 		
 		flag_monitor = true;
-		if( mon_time < 0 ) mon_time = 30;
+		if( mon_time < 0 ) mon_time = 2;
 		std::cout << "Getting data from shared memory every " << mon_time;
 		std::cout << " seconds using DataSpy" << std::endl;
 		

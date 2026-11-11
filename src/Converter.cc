@@ -5,16 +5,6 @@ GreatConverter::GreatConverter( std::shared_ptr<GreatSettings> myset ) {
 	// We need to do initialise, but only after Settings are added
 	set = myset;
 
-	my_tm_stp_msb = 0;
-	my_tm_stp_hsb = 0;
-	
-	// Resize counters
-	ctr_caen_hit.resize( set->GetNumberOfCAENModules() );
-	ctr_caen_ext.resize( set->GetNumberOfCAENModules() );
-
-	// Start counters at zero
-	StartFile();
-	
 	// Default that we do not have a source only run
 	flag_source = false;
 	
@@ -24,15 +14,22 @@ GreatConverter::GreatConverter( std::shared_ptr<GreatSettings> myset ) {
 }
 
 void GreatConverter::StartFile(){
-	
-	// Start counters at zero
-	for( unsigned int i = 0; i < set->GetNumberOfCAENModules(); ++i ) {
-				
-		ctr_caen_hit[i] = 0;	// hits on each module
-		ctr_caen_ext[i] = 0;	// external timestamps
 
-	}
-	
+	// Reset timestamps
+	my_tm_stp_msb = 0;
+	my_tm_stp_hsb = 0;
+
+	// Resize counters
+	ctr_caen_hit.resize( set->GetNumberOfCAENModules(), 0 );
+	ctr_caen_ext.resize( set->GetNumberOfCAENModules(), 0 );
+
+	// Flags for CAEN data items
+	flag_caen_data0 = false;
+	flag_caen_data1 = false;
+	flag_caen_data2 = false;
+	flag_caen_data3 = false;
+	flag_caen_trace = false;
+
 	return;
 	
 }
@@ -77,6 +74,7 @@ void GreatConverter::MakeHists() {
 	maindirname = "caen_hists";
 	
 	// Resive vectors
+	hcaen_trace.resize( set->GetNumberOfCAENModules() );
 	hcaen_qlong.resize( set->GetNumberOfCAENModules() );
 	hcaen_qshort.resize( set->GetNumberOfCAENModules() );
 	hcaen_qdiff.resize( set->GetNumberOfCAENModules() );
@@ -85,6 +83,7 @@ void GreatConverter::MakeHists() {
 	// Loop over CAEN modules
 	for( unsigned int i = 0; i < set->GetNumberOfCAENModules(); ++i ) {
 		
+		hcaen_trace[i].resize( set->GetNumberOfCAENChannels() );
 		hcaen_qlong[i].resize( set->GetNumberOfCAENChannels() );
 		hcaen_qshort[i].resize( set->GetNumberOfCAENChannels() );
 		hcaen_qdiff[i].resize( set->GetNumberOfCAENChannels() );
@@ -98,29 +97,52 @@ void GreatConverter::MakeHists() {
 		// Loop over channels of each CAEN module
 		for( unsigned int j = 0; j < set->GetNumberOfCAENChannels(); ++j ) {
 			
+			// Uncalibrated - traces
+			hname = "caen_" + std::to_string(i);
+			hname += "_" + std::to_string(j);
+			hname += "_traces";
+
+			htitle = "Raw CAEN V1725 traces for module " + std::to_string(i);
+			htitle += ", channel " + std::to_string(j);
+
+			htitle += ";sample;ADC value";
+
+			if( output_file->GetListOfKeys()->Contains( hname.data() ) )
+				hcaen_trace[i][j] = (TH1I*)output_file->Get( hname.data() );
+
+			else {
+
+				hcaen_trace[i][j] = new TH1I( hname.data(), htitle.data(),
+											 8192, -0.5, 8191.5 );
+
+				hcaen_trace[i][j]->SetDirectory(
+												output_file->GetDirectory( dirname.data() ) );
+
+			}
+
 			// Uncalibrated - Qlong
 			hname = "caen_" + std::to_string(i);
 			hname += "_" + std::to_string(j);
 			hname += "_qlong";
-			
+
 			htitle = "Raw CAEN V1725 spectra for module " + std::to_string(i);
 			htitle += ", channel " + std::to_string(j);
-			
+
 			htitle += ";Qlong;Counts";
-			
+
 			if( output_file->GetListOfKeys()->Contains( hname.data() ) )
 				hcaen_qlong[i][j] = (TH1F*)output_file->Get( hname.data() );
-			
+
 			else {
-				
+
 				hcaen_qlong[i][j] = new TH1F( hname.data(), htitle.data(),
-										   65536, -0.5, 65535.5 );
-			
+											 65536, -0.5, 65535.5 );
+
 				hcaen_qlong[i][j]->SetDirectory(
-						output_file->GetDirectory( dirname.data() ) );
-				
+												output_file->GetDirectory( dirname.data() ) );
+
 			}
-			
+
 			// Uncalibrated - Qshort
 			hname = "caen_" + std::to_string(i);
 			hname += "_" + std::to_string(j);
@@ -253,10 +275,14 @@ void GreatConverter::ResetHists() {
 	for( unsigned int i = 0; i < hcaen_ext.size(); ++i )
 		hcaen_ext[i]->Reset("ICESM");
 	
+	for( unsigned int i = 0; i < hcaen_trace.size(); ++i )
+		for( unsigned int j = 0; j < hcaen_trace[i].size(); ++j )
+			hcaen_trace[i][j]->Reset("ICESM");
+
 	for( unsigned int i = 0; i < hcaen_qlong.size(); ++i )
 		for( unsigned int j = 0; j < hcaen_qlong[i].size(); ++j )
 			hcaen_qlong[i][j]->Reset("ICESM");
-	
+
 	for( unsigned int i = 0; i < hcaen_qshort.size(); ++i )
 		for( unsigned int j = 0; j < hcaen_qshort[i].size(); ++j )
 			hcaen_qshort[i][j]->Reset("ICESM");
@@ -349,12 +375,7 @@ void GreatConverter::SetBlockData( char *input_data ){
 void GreatConverter::ProcessBlockData( unsigned long nblock ){
 
 	(void) nblock; // Avoid unused parameter warning.
-	
-	if( nblock < 10 ) {
-		flag_terminator = true;
-		return;
-	}
-	
+
 	// Get the data in 64-bit words and check endieness and swap if needed
 	// Data format here: http://npg.dl.ac.uk/documents/edoc504/edoc504.html
 	// Unpack in to two 32-bit words for purposes of data format
@@ -701,8 +722,13 @@ void GreatConverter::FinishCAENData(){
 	// Got all items
 	if( caen_data_check ){
 
-		// Fill histograms
+		// Fill hit histograms
 		hcaen_hit[caen_data->GetModule()]->Fill( ctr_caen_hit[caen_data->GetModule()], caen_data->GetTime(), 1 );
+
+		// Fill trace histograms
+		for( unsigned int i = 0; i < caen_data->GetTraceLength(); i++ ) {
+			hcaen_trace[caen_data->GetModule()][caen_data->GetChannel()]->SetBinContent( i+1, caen_data->GetSample(i) );
+		}
 
 		// Difference between Qlong and Qshort
 		int qdiff = (int)caen_data->GetQlong() - (int)caen_data->GetQshort();
