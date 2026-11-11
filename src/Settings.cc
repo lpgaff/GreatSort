@@ -59,9 +59,9 @@ void GreatSettings::ReadSettings() {
 
 		else {
 			
-			std::cerr << "Dodgy TAC settings: module = " << tac_mod[i];
-			std::cerr << " channel = " << tac_ch[i] << std::endl;
-			
+			std::cerr << "Dodgy TAC settings: module = " << (int)tac_mod[i];
+			std::cerr << " channel = " << (int)tac_ch[i] << std::endl;
+
 		}
 			
 	}
@@ -87,8 +87,8 @@ void GreatSettings::ReadSettings() {
 
 		else {
 
-			std::cerr << "Dodgy CeBr3 settings: module = " << cebr3_mod[i];
-			std::cerr << " channel = " << cebr3_ch[i] << std::endl;
+			std::cerr << "Dodgy CeBr3 settings: module = " << (int)cebr3_mod[i];
+			std::cerr << " channel = " << (int)cebr3_ch[i] << std::endl;
 
 		}
 
@@ -127,10 +127,68 @@ void GreatSettings::ReadSettings() {
 
 			else {
 
-				std::cerr << "Dodgy HPGe settings: module = " << hpge_mod[i][j];
-				std::cerr << " channel = " << hpge_ch[i][j] << std::endl;
+				std::cerr << "Dodgy HPGe settings: module = " << (int)hpge_mod[i][j];
+				std::cerr << " channel = " << (int)hpge_ch[i][j] << std::endl;
 
 			}
+
+		} // j
+
+	} // i
+
+
+	// DSSSDs
+	n_dsssds = config->GetValue( "NumberOfDSSSDs", 0 );
+	dsssd_mod.resize( n_hpge_detector );
+	dsssd_ch.resize( n_hpge_detector );
+	dsssd_id.resize( n_caen_mod );
+	dsssd_side.resize( n_caen_mod );
+	dsssd_strip.resize( n_caen_mod );
+	for( unsigned int i = 0; i < n_caen_mod; ++i ) {
+		dsssd_id[i].resize( n_caen_ch, -1 );
+		dsssd_side[i].resize( n_caen_ch, -1 );
+		dsssd_strip[i].resize( n_caen_ch, -1 );
+	}
+
+
+	n_dsssd_strips.resize( dsssd_side_ids.size() );
+	for( unsigned int i = 0; i < dsssd_side_ids.size(); ++i ){
+
+		n_dsssd_strips[i] = config->GetValue( Form( "NumberOfDSSSDStrips.%c", dsssd_side_ids[i] ), 8 );
+
+	} // i
+
+	for( unsigned int i = 0; i < n_dsssds; ++i ){
+
+		dsssd_mod[i].resize( dsssd_side_ids.size() );
+		dsssd_ch[i].resize( dsssd_side_ids.size() );
+
+		for( unsigned int j = 0; j < dsssd_side_ids.size(); ++j ){
+
+			dsssd_mod[i][j].resize( n_dsssd_strips[j] );
+			dsssd_ch[i][j].resize( n_dsssd_strips[j] );
+
+			for( unsigned int k = 0; k < n_dsssd_strips[j]; ++k ){
+
+				dsssd_mod[i][j][k] = config->GetValue( Form( "DSSSD_%d_%d.%c.Module", i, k, dsssd_side_ids[j] ), (int)0 );
+				dsssd_ch[i][j][k]  = config->GetValue( Form( "DSSSD_%d_%d.%c.Channel", i, k, dsssd_side_ids[j] ), (int)(k+j*n_dsssd_strips[0]) );
+
+				if( dsssd_mod[i][j][k] < n_caen_mod && dsssd_ch[i][j][k] < n_caen_ch ){
+
+					dsssd_id[dsssd_mod[i][j][k]][dsssd_ch[i][j][k]] = i;
+					dsssd_side[dsssd_mod[i][j][k]][dsssd_ch[i][j][k]] = j;
+					dsssd_strip[dsssd_mod[i][j][k]][dsssd_ch[i][j][k]] = k;
+
+				}
+
+				else {
+
+					std::cerr << "Dodgy DSSSD settings: module = " << (int)dsssd_mod[i][j][k];
+					std::cerr << " channel = " << (int)dsssd_ch[i][j][k] << std::endl;
+
+				}
+
+			} // k
 
 		} // j
 
@@ -225,6 +283,62 @@ short GreatSettings::GetHPGeSegment( unsigned char mod, unsigned char ch ) {
 	else {
 
 		std::cerr << "Bad HPGe event: module = " << (int)mod;
+		std::cerr << " channel = " << (int)ch << std::endl;
+		return -1;
+
+	}
+
+}
+
+bool GreatSettings::IsDSSSD( unsigned char mod, unsigned char ch ) {
+
+	/// Return true if this is an DSSSD event
+	if( dsssd_id[(int)mod][(int)ch] >= 0 ) return true;
+	else return false;
+
+}
+
+short GreatSettings::GetDSSSDID( unsigned char mod, unsigned char ch ) {
+
+	/// Return the detector ID of a DSSSD event by module and channel number
+	if( mod < n_caen_mod && ch < n_caen_ch )
+		return dsssd_id[(int)mod][(int)ch];
+
+	else {
+
+		std::cerr << "Bad DSSSD event: module = " << (int)mod;
+		std::cerr << " channel = " << (int)ch << std::endl;
+		return -1;
+
+	}
+
+}
+
+short GreatSettings::GetDSSSDSide( unsigned char mod, unsigned char ch ) {
+
+	/// Return the side (0 = p, 1 = n) of a DSSSDevent by module and channel number
+	if( mod < n_caen_mod && ch < n_caen_ch )
+		return dsssd_side[(int)mod][(int)ch];
+
+	else {
+
+		std::cerr << "Bad DSSSD event: module = " << (int)mod;
+		std::cerr << " channel = " << (int)ch << std::endl;
+		return -1;
+
+	}
+
+}
+
+short GreatSettings::GetDSSSDStrip( unsigned char mod, unsigned char ch ) {
+
+	/// Return the strip number of a DSSSD event by module and channel number
+	if( mod < n_caen_mod && ch < n_caen_ch )
+		return dsssd_strip[(int)mod][(int)ch];
+
+	else {
+
+		std::cerr << "Bad DSSSD event: module = " << (int)mod;
 		std::cerr << " channel = " << (int)ch << std::endl;
 		return -1;
 

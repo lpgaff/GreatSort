@@ -86,6 +86,13 @@ public:
 	short GetHPGeSegment( unsigned char mod, unsigned char ch );
 	bool IsHPGe( unsigned char mod, unsigned char ch );
 
+	// DSSSDs
+	inline unsigned short GetNumberOfDSSSDs(){ return n_dsssds; };
+	short GetDSSSDID( unsigned char mod, unsigned char ch );
+	short GetDSSSDStrip( unsigned char mod, unsigned char ch );
+	short GetDSSSDSide( unsigned char mod, unsigned char ch );
+	bool IsDSSSD( unsigned char mod, unsigned char ch );
+
 
 private:
 
@@ -121,7 +128,7 @@ private:
 
 	
 	// CeBr3 detectors
-	unsigned short n_cebr3_detector;				///< Number of CeBr gamma-ray detectors
+	unsigned short n_cebr3_detector;			///< Number of CeBr gamma-ray detectors
 	std::vector<unsigned char> cebr3_mod;		///< A list of module numbers for each CeBr gamma-ray  detectors
 	std::vector<unsigned char> cebr3_ch;		///< A list of channel numbers for each CeBr gamma-ray  detectors
 	std::vector<std::vector<short>> cebr3_id;	///< A channel map for the CeBr gamma-ray  detectors (-1 if not an CeBr gamma-ray detector)
@@ -132,8 +139,19 @@ private:
 	unsigned short n_hpge_segments;						///< Number of HPGe gamma-ray segments
 	std::vector<std::vector<unsigned char>> hpge_mod;	///< A list of module numbers for each HPGe gamma-ray detector and segment
 	std::vector<std::vector<unsigned char>> hpge_ch;	///< A list of channel numbers for each HPGe gamma-ray detector and segment
-	std::vector<std::vector<short>> hpge_id;				///< A channel map for the HPGe gamma-ray detectors (-1 if not an HPGe gamma-ray detector)
+	std::vector<std::vector<short>> hpge_id;			///< A channel map for the HPGe gamma-ray detectors (-1 if not an HPGe gamma-ray detector)
 	std::vector<std::vector<short>> hpge_seg;			///< A channel map for the HPGe gamma-ray segment (-1 if not an HPGe gamma-ray detector)
+
+
+	// DSSSDs
+	unsigned short n_dsssds;										///< Number of DSSSD wafers/detectors
+	std::vector<unsigned char> dsssd_side_ids = {'P','N'};			///< Number of sides in a DSSSD is always 2, named p and n
+	std::vector<unsigned short> n_dsssd_strips;						///< Number of strips on the p and n sides
+	std::vector<std::vector<std::vector<unsigned char>>> dsssd_mod;	///< A list of module numbers for each DSSSD, side and strip
+	std::vector<std::vector<std::vector<unsigned char>>> dsssd_ch;	///< A list of channel numbers for each DSSSD, side  and strip
+	std::vector<std::vector<short>> dsssd_id;						///< A channel map for the DSSSD ID (-1 if not a DSSSD)
+	std::vector<std::vector<short>> dsssd_side;						///< A channel map for the DSSSD side (-1 if not a DSSSD, 0 for p-side and 1 for n-side)
+	std::vector<std::vector<short>> dsssd_strip;					///< A channel map for the DSSSD strip number (-1 if not a DSSSD)
 
 
 };

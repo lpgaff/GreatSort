@@ -68,9 +68,23 @@
 #-------------#
 # TAC Modules #
 #-------------#
-#NumberOfTACs: 1	# Number of TACs
+#NumberOfTACs: 0	# Number of TACs
 #TAC_0.Module: 0	# location of the TAC in the DAQ
 #TAC_0.Channel: 3	# location of the TAC in the DAQ
 
+#--------#
+# DSSSDs #
+#--------#
+#NumberOfDSSSDs: 0			# This is default 0
+#NumberOfDSSSDStrips.P: 8		# number of p-side strips
+#NumberOfDSSSDStrips.N: 8		# number of n-side strips
+#DSSSD_0_0.P.Module: 0		# List of detector elements _<det>_<strip>
+#DSSSD_0_0.P.Channel: 0
+#DSSSD_0_1.P.Module: 0
+#DSSSD_0_1.P.Channel: 1
+#DSSSD_0_0.N.Module: 0
+#DSSSD_0_0.N.Channel: 8
+#DSSSD_0_1.N.Module: 0
+#DSSSD_0_1.N.Channel: 9
 
 
