@@ -5,6 +5,7 @@
 #pragma link off all typedef;
 #pragma link C++ nestedclasses;
 #pragma link C++ nestedtypedefs;
+#pragma link C++ class GreatMWD+;
 #pragma link C++ class GreatCalibration+;
 #pragma link C++ class GreatSettings+;
 #pragma link C++ class GreatConverter+;
@@ -14,8 +15,10 @@
 #pragma link C++ class GreatTACEvt+;
 #pragma link C++ class GreatHPGeEvt+;
 #pragma link C++ class GreatCeBr3Evt+;
+#pragma link C++ class GreatDSSSDEvt+;
 #pragma link C++ class GreatGammaRayEvt+;
 #pragma link C++ class GreatDetectorEvt+;
+#pragma link C++ class GreatDoubleSidedDetectorEvt+;
 #pragma link C++ class GreatDataPackets+;
 #pragma link C++ class GreatCaenData+;
 #pragma link C++ class GreatInfoData+;

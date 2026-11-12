@@ -58,6 +58,69 @@ protected:
 
 };
 
+class GreatDoubleSidedDetectorEvt : public TObject {
+
+public:
+
+	// setup functions
+	GreatDoubleSidedDetectorEvt() {};
+	~GreatDoubleSidedDetectorEvt() {};
+
+	GreatDoubleSidedDetectorEvt( const GreatDoubleSidedDetectorEvt &in ) {
+		SetEvent(in);
+	};
+
+	void SetEvent( const GreatDoubleSidedDetectorEvt &in ){
+		ntime	= in.GetNTime();
+		ptime	= in.GetPTime();
+		nenergy	= in.GetNEnergy();
+		penergy	= in.GetPEnergy();
+		id		= in.GetID();
+		nid		= in.GetNStrip();
+		pid		= in.GetPStrip();
+		type	= in.GetType();
+	};
+
+	inline void SetNTime( double t ){ ntime = t; };
+	inline void SetPTime( double t ){ ptime = t; };
+	inline void SetNEnergy( float e ){ nenergy = e; };
+	inline void SetPEnergy( float e ){ penergy = e; };
+	inline void SetID( unsigned short i ){ id = i; };
+	inline void SetNStrip( unsigned short i ){ nid = i; };
+	inline void SetPStrip( unsigned short i ){ pid = i; };
+	inline void SetType( unsigned char t ){ type = t; };
+
+	inline double			GetTime() const { return ptime; };
+	inline double			GetNTime() const { return ntime; };
+	inline double			GetPTime() const { return ptime; };
+	inline float			GetEnergy() const { return penergy; };
+	inline float			GetNEnergy() const { return nenergy; };
+	inline float			GetPEnergy() const { return penergy; };
+	inline unsigned short	GetID() const { return id; };
+	inline unsigned short	GetNStrip() const { return nid; };
+	inline unsigned short	GetPStrip() const { return pid; };
+	inline unsigned char	GetType() const { return type; };
+
+
+protected:
+
+	double			ntime = 0;		///< time stamp of the event in the n-side
+	double			ptime = 0;		///< time stamp of the event in the p-side
+	float			nenergy = 0;	///< Energy in the n-side of the detector
+	float			penergy = 0;	///< Energy in the p-side of the detector
+	unsigned short	id = 32767;		///< Detector ID
+	unsigned short	nid = 32767;	///< n-side strip
+	unsigned short	pid = 32767;	///< p-side stirp
+	unsigned short	seg = 32767;	///< Detector segment
+	unsigned char	type = 255;		///< Detector type:
+									///< 0 - CeBr
+									///< 1 - HPGe(?), segments, etc?!??!??!
+									///< 2 - TAC
+
+	ClassDef( GreatDoubleSidedDetectorEvt, 2 );
+
+};
+
 class GreatTACEvt : public GreatDetectorEvt {
 
 public:
@@ -106,6 +169,17 @@ protected:
 
 };
 
+class GreatDSSSDEvt : public GreatDoubleSidedDetectorEvt {
+
+public:
+
+
+protected:
+
+	ClassDef( GreatDSSSDEvt, 1 );
+
+};
+
 
 class GreatEvts : public TObject {
 
@@ -128,6 +202,10 @@ public:
 		GreatHPGeEvt fill_evt( *(event.get()) );
 		hpge_event.push_back( fill_evt );
 	};
+	void AddEvt( std::shared_ptr<GreatDSSSDEvt> event ){
+		GreatDSSSDEvt fill_evt( *(event.get()) );
+		dsssd_event.push_back( fill_evt );
+	};
 
 	inline unsigned int GetTACMultiplicity() const { return tac_event.size(); };
 	inline unsigned int GetGammaRayMultiplicity() const {
@@ -138,6 +216,9 @@ public:
 	};
 	inline unsigned int GetHPGeMultiplicity() const {
 		return hpge_event.size();
+	};
+	inline unsigned int GetDSSSDMultiplicity() const {
+		return dsssd_event.size();
 	};
 
 	inline std::shared_ptr<GreatTACEvt> GetTACEvt( unsigned int i ) const {
@@ -152,11 +233,16 @@ public:
 		if( i < hpge_event.size() ) return std::make_shared<GreatHPGeEvt>( hpge_event.at(i) );
 		else return nullptr;
 	};
+	inline std::shared_ptr<GreatDSSSDEvt> GetDSSSDEvt( unsigned int i ) const {
+		if( i < dsssd_event.size() ) return std::make_shared<GreatDSSSDEvt>( dsssd_event.at(i) );
+		else return nullptr;
+	};
 
 	void ClearEvt(){
 		std::vector<GreatTACEvt>().swap(tac_event);
 		std::vector<GreatCeBr3Evt>().swap(cebr3_event);
 		std::vector<GreatHPGeEvt>().swap(hpge_event);
+		std::vector<GreatDSSSDEvt>().swap(dsssd_event);
 	};
 	double GetTime() const;
 
@@ -166,8 +252,9 @@ protected:
 	std::vector<GreatTACEvt> tac_event;
 	std::vector<GreatCeBr3Evt> cebr3_event;
 	std::vector<GreatHPGeEvt> hpge_event;
+	std::vector<GreatDSSSDEvt> dsssd_event;
 
-	ClassDef( GreatEvts, 3 )
+	ClassDef( GreatEvts, 4 )
 
 };
 

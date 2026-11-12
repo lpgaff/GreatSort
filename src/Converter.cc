@@ -75,6 +75,8 @@ void GreatConverter::MakeHists() {
 	
 	// Resive vectors
 	hcaen_trace.resize( set->GetNumberOfCAENModules() );
+	hcaen_mwd.resize( set->GetNumberOfCAENModules() );
+	hcaen_cur.resize( set->GetNumberOfCAENModules() );
 	hcaen_qlong.resize( set->GetNumberOfCAENModules() );
 	hcaen_qshort.resize( set->GetNumberOfCAENModules() );
 	hcaen_qdiff.resize( set->GetNumberOfCAENModules() );
@@ -84,6 +86,8 @@ void GreatConverter::MakeHists() {
 	for( unsigned int i = 0; i < set->GetNumberOfCAENModules(); ++i ) {
 		
 		hcaen_trace[i].resize( set->GetNumberOfCAENChannels() );
+		hcaen_mwd[i].resize( set->GetNumberOfCAENChannels() );
+		hcaen_cur[i].resize( set->GetNumberOfCAENChannels() );
 		hcaen_qlong[i].resize( set->GetNumberOfCAENChannels() );
 		hcaen_qshort[i].resize( set->GetNumberOfCAENChannels() );
 		hcaen_qdiff[i].resize( set->GetNumberOfCAENChannels() );
@@ -97,7 +101,7 @@ void GreatConverter::MakeHists() {
 		// Loop over channels of each CAEN module
 		for( unsigned int j = 0; j < set->GetNumberOfCAENChannels(); ++j ) {
 			
-			// Uncalibrated - traces
+			// Traces; overwritten for every event
 			hname = "caen_" + std::to_string(i);
 			hname += "_" + std::to_string(j);
 			hname += "_traces";
@@ -117,6 +121,52 @@ void GreatConverter::MakeHists() {
 
 				hcaen_trace[i][j]->SetDirectory(
 												output_file->GetDirectory( dirname.data() ) );
+
+			}
+
+			// MWD - energy
+			hname = "caen_" + std::to_string(i);
+			hname += "_" + std::to_string(j);
+			hname += "_mwd";
+
+			htitle = "MWD energy from trace analysis for module " + std::to_string(i);
+			htitle += ", channel " + std::to_string(j);
+
+			htitle += ";MWD Energy;Counts";
+
+			if( output_file->GetListOfKeys()->Contains( hname.data() ) )
+				hcaen_mwd[i][j] = (TH1F*)output_file->Get( hname.data() );
+
+			else {
+
+				hcaen_mwd[i][j] = new TH1F( hname.data(), htitle.data(),
+										   65536, -0.5, 65535.5 );
+
+				hcaen_mwd[i][j]->SetDirectory(
+											  output_file->GetDirectory( dirname.data() ) );
+
+			}
+
+			// MWD - current
+			hname = "caen_" + std::to_string(i);
+			hname += "_" + std::to_string(j);
+			hname += "_cur";
+
+			htitle = "Maximum current from trace analysis for module " + std::to_string(i);
+			htitle += ", channel " + std::to_string(j);
+
+			htitle += ";Max current;Counts";
+
+			if( output_file->GetListOfKeys()->Contains( hname.data() ) )
+				hcaen_cur[i][j] = (TH1F*)output_file->Get( hname.data() );
+
+			else {
+
+				hcaen_cur[i][j] = new TH1F( hname.data(), htitle.data(),
+										   65536, -0.5, 65535.5 );
+
+				hcaen_cur[i][j]->SetDirectory(
+											  output_file->GetDirectory( dirname.data() ) );
 
 			}
 
@@ -705,7 +755,22 @@ int GreatConverter::ProcessTraceData( int pos ){
 		}
 		
 	}
-	
+
+	// Analyse the traces
+	GreatMWD mwd = cal->DoMWD( my_mod_id, my_ch_id, caen_data->GetTrace() );
+	caen_data->SetClipped( mwd.IsClipped() );
+
+	for( unsigned int i = 0; i < mwd.NumberOfTriggers(); ++i ){
+		hcaen_mwd[my_mod_id][my_ch_id]->Fill( mwd.GetEnergy(i) );
+		//hcaen_cur[my_mod_id][my_ch_id]->Fill( mwd.GetMaxCurrent(i) );
+	}
+
+	// For now, just add one energy to event, might do more later
+	if( mwd.NumberOfTriggers() > 0 ) {
+		caen_data->SetMWDEnergy( mwd.GetEnergy(0) );
+		//caen_data->SetMaxCurrent( mwd.GetMaxCurrent(0) );
+	}
+
 	flag_caen_trace = true;
 
 	return pos;

@@ -101,13 +101,16 @@ void GreatCaenData::ClearData(){
 	timestamp = 0.0;
 	finetime = 0.0;
 	baseline = 0.0;
-	trace.clear();
+	std::vector<unsigned short>().swap(trace);
 	Qlong = 0;
 	Qshort = 0;
+	mwdenergy = 0;
+	maxcurrent = 0;
 	mod = 255;
 	ch = 255;
 	energy = -999.;
 	thres = true;
+	clipped = false;
 
 	return;
 	

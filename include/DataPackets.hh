@@ -44,8 +44,12 @@ public:
 	inline unsigned short	GetQlong() { return Qlong; };
 	inline unsigned short	GetQshort() { return Qshort; };
 	inline unsigned short	GetQdiff() { return (int)Qlong-(int)Qshort; };
+	inline unsigned short	GetMWDEnergy() { return mwdenergy; };
+	inline unsigned short	GetMaxCurrent() { return maxcurrent; };
 	inline float			GetEnergy() { return energy; };
 	inline bool				IsOverThreshold() { return thres; };
+	inline bool				IsClipped() { return clipped; };
+
 
 	inline void	SetTimeStamp( unsigned long long t ) { timestamp = t; };
 	inline void	SetFineTime( float t ) { finetime = t; };
@@ -54,10 +58,13 @@ public:
 	inline void AddSample( unsigned short s ) { trace.push_back(s); };
 	inline void	SetQlong( unsigned short q ) { Qlong = q; };
 	inline void	SetQshort( unsigned short q ) { Qshort = q; };
+	inline void	SetMWDEnergy( unsigned short q ) { mwdenergy = q; };
+	inline void	SetMaxCurrent( unsigned short q ) { maxcurrent = q; };
 	inline void	SetModule( unsigned char m ) { mod = m; };
 	inline void	SetChannel( unsigned char c ) { ch = c; };
 	inline void SetEnergy( float e ){ energy = e; };
 	inline void SetThreshold( bool t ){ thres = t; };
+	inline void SetClipped( bool c ){ clipped = c; };
 
 	inline void ClearTrace() { trace.clear(); };
 	void ClearData();
@@ -70,14 +77,17 @@ protected:
 	std::vector<unsigned short>	trace;
 	unsigned short				Qlong;
 	unsigned short				Qshort;
+	unsigned short				mwdenergy;
+	unsigned short				maxcurrent;
 	unsigned char				mod;
 	unsigned char				ch;
 	bool						thres;		///< is the energy over threshold?
 	float						energy;
+	bool						clipped;	///< is the ADC value over range?
 
 	
-	ClassDef( GreatCaenData, 6 )
-	
+	ClassDef( GreatCaenData, 7 )
+
 };
 
 class GreatInfoData : public TObject {
