@@ -805,8 +805,9 @@ void GreatConverter::FinishCAENData(){
 		if( entype == "Qlong" ) adc_value = caen_data->GetQlong();
 		else if( entype == "Qshort" ) adc_value = caen_data->GetQshort();
 		else if( entype == "Qdiff" ) adc_value = caen_data->GetQdiff();
+		else if( entype == "MWD" ) adc_value = caen_data->GetMWDEnergy();
 		else {
-			std::cerr << "Incorrect CAEN energy type must be Qlong, Qshort or Qdiff" << std::endl;
+			std::cerr << "Incorrect CAEN energy type must be Qlong, Qshort, Qdiff or MWD" << std::endl;
 			adc_value = caen_data->GetQlong();
 		}
 		my_energy = cal->CaenEnergy( caen_data->GetModule(), caen_data->GetChannel(), adc_value );
