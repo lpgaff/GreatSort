@@ -14,12 +14,23 @@
 # caen_<mod>_<ch>.Threshold:	// software threshold in adc units (default = 0)
 # caen_<mod>_<ch>.Type:			// data type to use for the energy evaluation: Qlong, Qshort, Qdiff or MWD (default = Qlong). Qdiff = Qlong - Qshort, MWD from traces
 
-caen_0_0.Offset: 0.0
-caen_0_0.Gain: 1.0
-caen_0_0.Type: Qlong
-caen_0_1.Offset: 0.0
-caen_0_1.Gain: 1.0
-caen_0_1.Type: Qlong
-caen_0_2.Offset: 0.0
-caen_0_2.Gain: 1.0
-caen_0_2.Type: Qdiff
+# For the CFD and MWD parameters for trace analysis, one has to pass the values as below:
+# caen_<mod>_<ch>.MWD.DecayTime:			# this is equivalent to tau
+# caen_<mod>_<ch>.MWD.RiseTime:			# this is equivalent to 'MWD: L'
+# caen_<mod>_<ch>.MWD.Window:				# this is equivalent to 'MWD: M'
+# caen_<mod>_<ch>.MWD.FlatTop:				# this is equivalent to 'MWD: CFD Trig Delay' - 'MWD: Delay Input'
+# caen_<mod>_<ch>.MWD.Baseline:			# this is equivalent to 'MWD: Delay Input', i.e. the number of sample before the trigger where you want to take the baseline energy
+# caen_<mod>_<ch>.CFD.Threshold:			# this is equivalent to 'CFD Arm Thresh', i.e. the threshold of the CFD (polarity sensitive)
+# caen_<mod>_<ch>.CFD.DelayTime:			# this is equivalent to 'CFD Delay', i.e. the delay time of the CFD
+# caen_<mod>_<ch>.CFD.ShapingTime:			# this is equivalent to 'CFD Differential Time', i.e. the differential shaping time of the CFD.
+# caen_<mod>_<ch>.CFD.IntegrationTime:		# this is equivalent to 'CFD Integral Time', i.e. the integral shaping time of the CFD - set to 1 to be equivalent to Liam's method.
+# caen_<mod>_<ch>.CFD.Fraction:			# this is the CFD fraction
+# caen_<mod>_<ch>.CFD.HoldOff:				# this is equivalent to 'CFD Delay', i.e. the hold-off time of the CFD (from initial LED threshold crossing).
+
+
+# The above can be set to some default parameters
+#caen.<parameter>: <value>
+
+# Which can be overridden on an module channel basis
+#caen_<mod>.<parameter>: <value>
+#caen_<mod>_<ch>.<parameter>: <value>
