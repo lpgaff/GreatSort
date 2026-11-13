@@ -498,8 +498,8 @@ void GreatConverter::ProcessBlockData( unsigned long nblock ){
 		if( my_type == 0x3 ){
 			
 			// Check if it's new data
-			ProcessCAENData();
-			FinishCAENData();
+			if( ProcessCAENData() )
+				FinishCAENData();
 
 		}
 		
@@ -550,7 +550,7 @@ bool GreatConverter::GetCAENChanID(){
 	
 }
 
-void GreatConverter::ProcessCAENData(){
+bool GreatConverter::ProcessCAENData(){
 
 	// CAEN data format
 	my_adc_data = word_0 & 0xFFFF; // 16 bits from 0
@@ -563,7 +563,7 @@ void GreatConverter::ProcessCAENData(){
 		std::cout << "Bad CAEN event with mod_id=" << (int) my_mod_id;
 		std::cout << " ch_id=" << (int) my_ch_id;
 		std::cout << " data_id=" << (int) my_data_id << std::endl;
-		return;
+		return false;
 
 	}
 	
@@ -631,7 +631,7 @@ void GreatConverter::ProcessCAENData(){
 		// Check we don't already have this data type
 		if( flag_caen_data0 ) {
 			std::cout << "Got data0 twice for the same event" << std::endl;
-			return;
+			return false;
 		}
 		
 		// Fill histograms
@@ -648,7 +648,7 @@ void GreatConverter::ProcessCAENData(){
 		// Check we don't already have this data type
 		if( flag_caen_data1 ) {
 			std::cout << "Got data1 twice for the same event" << std::endl;
-			return;
+			return false;
 		}
 		
 		my_adc_data = my_adc_data & 0x7FFF; // 15 bits from 0
@@ -670,7 +670,7 @@ void GreatConverter::ProcessCAENData(){
 		// Check we don't already have this data type
 		if( flag_caen_data2 ) {
 			std::cout << "Got data2 twice for the same event" << std::endl;
-			return;
+			return false;
 		}
 
 		my_adc_data = my_adc_data & 0xFFFF; // 16 bits from 0
@@ -687,7 +687,7 @@ void GreatConverter::ProcessCAENData(){
 		// Check we don't already have this data type
 		if( flag_caen_data3 ) {
 			std::cout << "Got data3 twice for the same event" << std::endl;
-			return;
+			return false;
 		}
 
 		my_adc_data = my_adc_data & 0x03FF; // 10 bits from 0
@@ -702,7 +702,7 @@ void GreatConverter::ProcessCAENData(){
 
 	}
 	
-	return;
+	return true;
 
 }
 

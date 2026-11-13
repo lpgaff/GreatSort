@@ -65,7 +65,7 @@ public:
 	void SetBlockData( char *input_data );
 	void ProcessBlockData( unsigned long nblock );
 
-	void ProcessCAENData();
+	bool ProcessCAENData();
 	int ProcessTraceData( int pos );
 	void ProcessInfoData();
 	void FinishCAENData();
