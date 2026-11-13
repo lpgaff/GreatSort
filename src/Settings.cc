@@ -139,8 +139,8 @@ void GreatSettings::ReadSettings() {
 
 	// DSSSDs
 	n_dsssds = config->GetValue( "NumberOfDSSSDs", 0 );
-	dsssd_mod.resize( n_hpge_detector );
-	dsssd_ch.resize( n_hpge_detector );
+	dsssd_mod.resize( n_dsssds );
+	dsssd_ch.resize( n_dsssds );
 	dsssd_id.resize( n_caen_mod );
 	dsssd_side.resize( n_caen_mod );
 	dsssd_strip.resize( n_caen_mod );
